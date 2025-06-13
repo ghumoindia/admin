@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
@@ -14,7 +14,8 @@ import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
 
 import { addPlace, deletePlace, updatePlace } from "../hooks/slice/placesSlice";
-
+import { Editor } from "@toast-ui/react-editor";
+import Select from "react-select";
 export default function Places() {
   const dispatch = useDispatch();
   const places = useSelector((store) => store.places.places);
@@ -33,6 +34,8 @@ export default function Places() {
     placeIds: [],
     cusinoIds: [],
   });
+
+  const editorRef = useRef();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -87,36 +90,40 @@ export default function Places() {
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFormData((prev) => ({
+      ...prev,
+      coverImage: file,
+    }));
+  };
+
+  const handleMultiFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setFormData((prev) => ({
+      ...prev,
+      slideshowImages: files,
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end items-center">
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Cities
+          Add Places
         </Button>
       </div>
-
       {showForm && (
         <Card>
           <CardHeader>
             <CardTitle>
-              {editingPlaces ? "Edit State" : "Add New State"}
+              {editingPlaces ? "Edit Places" : "Add New Places"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="id">State ID</Label>
-                  <Input
-                    id="id"
-                    name="id"
-                    value={formData.id}
-                    onChange={handleInputChange}
-                    placeholder="rajasthan"
-                    required
-                  />
-                </div>
                 <div>
                   <Label htmlFor="title">Title</Label>
                   <Input
@@ -139,29 +146,48 @@ export default function Places() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="coverImage">Cover Image</Label>
                   <Input
                     id="coverImage"
+                    type="file"
                     name="coverImage"
-                    value={formData.coverImage}
-                    onChange={handleInputChange}
-                    placeholder="rajasthan.jpg"
-                    required
+                    onChange={handleFileChange}
+                    accept="image/*"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="slideshowImages">Slideshow Images</Label>
+                  <Input
+                    id="slideshowImages"
+                    type="file"
+                    name="slideshowImages"
+                    onChange={handleMultiFileChange}
+                    multiple
+                    accept="image/*"
                   />
                 </div>
               </div>
+
               <div>
                 <Label htmlFor="about">About</Label>
-                <Textarea
-                  id="about"
-                  name="about"
-                  value={formData.about}
-                  onChange={handleInputChange}
-                  placeholder="Describe the state..."
-                  rows={4}
+                <Editor
+                  initialValue={formData.about}
+                  previewStyle="vertical"
+                  height="300px"
+                  initialEditType="textarea"
+                  useCommandShortcut={true}
+                  ref={editorRef}
+                  onChange={() => {
+                    const html = editorRef.current?.getInstance().getHTML();
+                    setFormData((prev) => ({ ...prev, about: html }));
+                  }}
                 />
               </div>
+
               <div className="flex space-x-2">
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />

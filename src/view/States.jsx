@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import "@toast-ui/editor/dist/toastui-editor.css";
 
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/components/ui/button";
@@ -13,6 +14,24 @@ import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
 import { addState, updateState, deleteState } from "../hooks/slice/statesSlice";
+import Select from "react-select";
+import { Editor } from "@toast-ui/react-editor";
+
+const optionsCity = [
+  { value: "jaipur", label: "Jaipur" },
+  { value: "udaipur", label: "Udaipur" },
+];
+const optionsPlace = [
+  { value: "hawa-mahal", label: "Hawa Mahal" },
+  { value: "amber-fort", label: "Amber Fort" },
+  { value: "city-palace-udaipur", label: "City Palace Udaipur" },
+  { value: "lake-pichola", label: "Lake Pichola" },
+];
+const optionsFood = [
+  { value: "dal-baati", label: "Dal Baati Churma" },
+  { value: "ghewar", label: "Ghewar" },
+  { value: "malpua", label: "Malpua" },
+];
 
 export default function States() {
   const dispatch = useDispatch();
@@ -23,7 +42,7 @@ export default function States() {
     id: "",
     title: "",
     subtitle: "",
-    coverImage: "",
+    coverImage: null,
     slideshowImages: [],
     about: "",
     cityIds: [],
@@ -32,6 +51,9 @@ export default function States() {
     cusinoIds: [],
   });
 
+  console.log(formData, "formData in States");
+
+  const editorRef = useRef();
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -56,12 +78,36 @@ export default function States() {
     resetForm();
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFormData((prev) => ({
+      ...prev,
+      coverImage: file,
+    }));
+  };
+
+  const handleMultiFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setFormData((prev) => ({
+      ...prev,
+      slideshowImages: files,
+    }));
+  };
+
+  const handleSelectChange = (selectedOptions, name) => {
+    const values = selectedOptions.map((option) => option.value);
+    setFormData((prev) => ({
+      ...prev,
+      [name]: selectedOptions,
+    }));
+  };
+
   const resetForm = () => {
     setFormData({
       id: "",
       title: "",
       subtitle: "",
-      coverImage: "",
+      coverImage: null,
       slideshowImages: [],
       about: "",
       cityIds: [],
@@ -106,17 +152,6 @@ export default function States() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="id">State ID</Label>
-                  <Input
-                    id="id"
-                    name="id"
-                    value={formData.id}
-                    onChange={handleInputChange}
-                    placeholder="rajasthan"
-                    required
-                  />
-                </div>
-                <div>
                   <Label htmlFor="title">Title</Label>
                   <Input
                     id="title"
@@ -138,29 +173,84 @@ export default function States() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="coverImage">Cover Image</Label>
                   <Input
                     id="coverImage"
+                    type="file"
                     name="coverImage"
-                    value={formData.coverImage}
-                    onChange={handleInputChange}
-                    placeholder="rajasthan.jpg"
-                    required
+                    onChange={handleFileChange}
+                    accept="image/*"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="slideshowImages">Slideshow Images</Label>
+                  <Input
+                    id="slideshowImages"
+                    type="file"
+                    name="slideshowImages"
+                    onChange={handleMultiFileChange}
+                    multiple
+                    accept="image/*"
                   />
                 </div>
               </div>
+
               <div>
                 <Label htmlFor="about">About</Label>
-                <Textarea
-                  id="about"
-                  name="about"
-                  value={formData.about}
-                  onChange={handleInputChange}
-                  placeholder="Describe the state..."
-                  rows={4}
+                <Editor
+                  initialValue={formData.about}
+                  previewStyle="vertical"
+                  height="300px"
+                  initialEditType="textarea"
+                  useCommandShortcut={true}
+                  ref={editorRef}
+                  onChange={() => {
+                    const html = editorRef.current?.getInstance().getHTML();
+                    setFormData((prev) => ({ ...prev, about: html }));
+                  }}
                 />
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>City</Label>
+                  <Select
+                    isMulti
+                    options={optionsCity}
+                    value={formData.cityIds}
+                    onChange={(selected) =>
+                      handleSelectChange(selected, "cityIds")
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Places</Label>
+                  <Select
+                    isMulti
+                    options={optionsPlace}
+                    value={formData.placeIds}
+                    onChange={(selected) =>
+                      handleSelectChange(selected, "placeIds")
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Foods</Label>
+                  <Select
+                    isMulti
+                    options={optionsFood}
+                    value={formData.foodIds}
+                    onChange={(selected) =>
+                      handleSelectChange(selected, "foodIds")
+                    }
+                  />
+                </div>
+              </div>
+
               <div className="flex space-x-2">
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
@@ -176,7 +266,7 @@ export default function States() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:  grid-cols-2 lg:grid-cols-3 gap-6">
         {states.map((state) => (
           <Card key={state.id}>
             <CardHeader>

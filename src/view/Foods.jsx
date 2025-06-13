@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
@@ -13,6 +13,8 @@ import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
 import { addFood, deleteFood, updateFood } from "../hooks/slice/foodSlice";
+import { Editor } from "@toast-ui/react-editor";
+import Select from "react-select";
 
 export default function Foods() {
   const dispatch = useDispatch();
@@ -32,6 +34,7 @@ export default function Foods() {
     placeIds: [],
     cusinoIds: [],
   });
+  const editorRef = useRef();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -86,6 +89,22 @@ export default function Foods() {
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFormData((prev) => ({
+      ...prev,
+      coverImage: file,
+    }));
+  };
+
+  const handleMultiFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setFormData((prev) => ({
+      ...prev,
+      slideshowImages: files,
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end items-center">
@@ -98,26 +117,13 @@ export default function Foods() {
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>
-              {editingFoods ? "Edit State" : "Add New State"}
-            </CardTitle>
+            <CardTitle>{editingFoods ? "Edit Food" : "Add New Food"}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="id">State ID</Label>
-                  <Input
-                    id="id"
-                    name="id"
-                    value={formData.id}
-                    onChange={handleInputChange}
-                    placeholder="rajasthan"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="title">Title</Label>
+                  <Label htmlFor="title">Name</Label>
                   <Input
                     id="title"
                     name="title"
@@ -128,7 +134,7 @@ export default function Foods() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="subtitle">Subtitle</Label>
+                  <Label htmlFor="subtitle">Local Name </Label>
                   <Input
                     id="subtitle"
                     name="subtitle"
@@ -138,29 +144,48 @@ export default function Foods() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="coverImage">Cover Image</Label>
                   <Input
                     id="coverImage"
+                    type="file"
                     name="coverImage"
-                    value={formData.coverImage}
-                    onChange={handleInputChange}
-                    placeholder="rajasthan.jpg"
-                    required
+                    onChange={handleFileChange}
+                    accept="image/*"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="slideshowImages">Slideshow Images</Label>
+                  <Input
+                    id="slideshowImages"
+                    type="file"
+                    name="slideshowImages"
+                    onChange={handleMultiFileChange}
+                    multiple
+                    accept="image/*"
                   />
                 </div>
               </div>
+
               <div>
                 <Label htmlFor="about">About</Label>
-                <Textarea
-                  id="about"
-                  name="about"
-                  value={formData.about}
-                  onChange={handleInputChange}
-                  placeholder="Describe the state..."
-                  rows={4}
+                <Editor
+                  initialValue={formData.about}
+                  previewStyle="vertical"
+                  height="300px"
+                  initialEditType="textarea"
+                  useCommandShortcut={true}
+                  ref={editorRef}
+                  onChange={() => {
+                    const html = editorRef.current?.getInstance().getHTML();
+                    setFormData((prev) => ({ ...prev, about: html }));
+                  }}
                 />
               </div>
+
               <div className="flex space-x-2">
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
@@ -202,11 +227,7 @@ export default function Foods() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 mb-2">{foods.subtitle}</p>
-              <div className="text-xs text-gray-500">
-                <p>ID: {foods.id}</p>
-                <p>Cover: {foods.coverImage}</p>
-                <p>Cities: {foods?.stateIds?.length || 0}</p>
-              </div>
+              <div className="text-xs text-gray-500"></div>
             </CardContent>
           </Card>
         ))}
