@@ -12,67 +12,25 @@ import {
 import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
-import { addCity, deleteCity, updateCity } from "../hooks/slice/citiesSlice";
+
+import {
+  addPlace,
+  deletePlace,
+  updatePlace,
+} from "../../hooks/slice/placesSlice";
 import { Editor } from "@toast-ui/react-editor";
 import Select from "react-select";
-
-const optionsState = [
-  { value: "andhra-pradesh", label: "Andhra Pradesh" },
-  { value: "arunachal-pradesh", label: "Arunachal Pradesh" },
-  { value: "assam", label: "Assam" },
-  { value: "bihar", label: "Bihar" },
-  { value: "chhattisgarh", label: "Chhattisgarh" },
-  { value: "goa", label: "Goa" },
-  { value: "gujarat", label: "Gujarat" },
-  { value: "haryana", label: "Haryana" },
-  { value: "himachal-pradesh", label: "Himachal Pradesh" },
-  { value: "jharkhand", label: "Jharkhand" },
-  { value: "karnataka", label: "Karnataka" },
-  { value: "kerala", label: "Kerala" },
-  { value: "madhya-pradesh", label: "Madhya Pradesh" },
-  { value: "maharashtra", label: "Maharashtra" },
-  { value: "manipur", label: "Manipur" },
-  { value: "meghalaya", label: "Meghalaya" },
-  { value: "mizoram", label: "Mizoram" },
-  { value: "nagaland", label: "Nagaland" },
-  { value: "odisha", label: "Odisha" },
-  { value: "punjab", label: "Punjab" },
-  { value: "rajasthan", label: "Rajasthan" },
-  { value: "sikkim", label: "Sikkim" },
-  { value: "tamil-nadu", label: "Tamil Nadu" },
-  { value: "telangana", label: "Telangana" },
-  { value: "tripura", label: "Tripura" },
-  { value: "uttar-pradesh", label: "Uttar Pradesh" },
-  { value: "uttarakhand", label: "Uttarakhand" },
-  { value: "west-bengal", label: "West Bengal" },
-  { value: "delhi", label: "Delhi" },
-  { value: "jammu-kashmir", label: "Jammu & Kashmir" },
-  { value: "ladakh", label: "Ladakh" },
-];
-
-const optionsPlace = [
-  { value: "hawa-mahal", label: "Hawa Mahal" },
-  { value: "amber-fort", label: "Amber Fort" },
-  { value: "city-palace-udaipur", label: "City Palace Udaipur" },
-  { value: "lake-pichola", label: "Lake Pichola" },
-];
-const optionsFood = [
-  { value: "dal-baati", label: "Dal Baati Churma" },
-  { value: "ghewar", label: "Ghewar" },
-  { value: "malpua", label: "Malpua" },
-];
-
-export default function Cities() {
+export default function Places() {
   const dispatch = useDispatch();
-  const cities = useSelector((cities) => cities.cities.cities);
-
-  const [editingCities, setEditingCities] = useState(null);
+  const places = useSelector((store) => store.places.places);
+  console.log(places, "places");
+  const [editingPlaces, setEditingPlaces] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
     title: "",
     subtitle: "",
-    coverImage: null,
+    coverImage: "",
     slideshowImages: [],
     about: "",
     stateIds: [],
@@ -81,8 +39,8 @@ export default function Cities() {
     cusinoIds: [],
   });
 
-  console.log(formData, "formData in Cities");
   const editorRef = useRef();
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -93,12 +51,12 @@ export default function Cities() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (editingCities) {
-      dispatch(updateCity(formData));
-      setEditingCities(null);
+    if (editingPlaces) {
+      dispatch(updatePlace(formData));
+      setEditingPlaces(null);
     } else {
       dispatch(
-        addCity({
+        addPlace({
           ...formData,
           id: formData.id || Date.now().toString(),
         })
@@ -112,7 +70,7 @@ export default function Cities() {
       id: "",
       title: "",
       subtitle: "",
-      coverImage: null,
+      coverImage: "",
       slideshowImages: [],
       about: "",
       stateIds: [],
@@ -121,18 +79,18 @@ export default function Cities() {
       cusinoIds: [],
     });
     setShowForm(false);
-    setEditingCities(null);
+    setEditingPlaces(null);
   };
 
   const handleEdit = (state) => {
     setFormData(state);
-    setEditingCities(state.id);
+    setEditingPlaces(state.id);
     setShowForm(true);
   };
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this state?")) {
-      dispatch(deleteCity(id));
+      dispatch(deletePlace(id));
     }
   };
 
@@ -152,28 +110,19 @@ export default function Cities() {
     }));
   };
 
-  const handleSelectChange = (selectedOptions, name) => {
-    const values = selectedOptions.map((option) => option.value);
-    setFormData((prev) => ({
-      ...prev,
-      [name]: selectedOptions,
-    }));
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-end items-center">
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Cities
+          Add Places
         </Button>
       </div>
-
       {showForm && (
         <Card>
           <CardHeader>
             <CardTitle>
-              {editingCities ? "Edit Cities" : "Add New Cities"}
+              {editingPlaces ? "Edit Places" : "Add New Places"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -243,46 +192,10 @@ export default function Cities() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label>State</Label>
-                  <Select
-                    isMulti
-                    options={optionsState}
-                    value={formData.stateIds}
-                    onChange={(selected) =>
-                      handleSelectChange(selected, "stateIds")
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Places</Label>
-                  <Select
-                    isMulti
-                    options={optionsPlace}
-                    value={formData.placeIds}
-                    onChange={(selected) =>
-                      handleSelectChange(selected, "placeIds")
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Foods</Label>
-                  <Select
-                    isMulti
-                    options={optionsFood}
-                    value={formData.foodIds}
-                    onChange={(selected) =>
-                      handleSelectChange(selected, "foodIds")
-                    }
-                  />
-                </div>
-              </div>
-
               <div className="flex space-x-2">
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
-                  {editingCities ? "Update" : "Save"}
+                  {editingPlaces ? "Update" : "Save"}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
                   <X className="h-4 w-4 mr-2" />
@@ -295,7 +208,7 @@ export default function Cities() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cities.map((city) => (
+        {places.map((city) => (
           <Card key={city.id}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
@@ -321,8 +234,8 @@ export default function Cities() {
             <CardContent>
               <p className="text-sm text-gray-600 mb-2">{city.subtitle}</p>
               <div className="text-xs text-gray-500">
-                <p>City Name : {city.title}</p>
-                {/* <p>Cover: {city?.coverImage}</p> */}
+                <p>ID: {city.id}</p>
+                <p>Cover: {city.coverImage}</p>
                 <p>Cities: {city?.stateIds?.length || 0}</p>
               </div>
             </CardContent>

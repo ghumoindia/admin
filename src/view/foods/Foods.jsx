@@ -12,15 +12,15 @@ import {
 import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
-
-import { addPlace, deletePlace, updatePlace } from "../hooks/slice/placesSlice";
+import { addFood, deleteFood, updateFood } from "../../hooks/slice/foodSlice";
 import { Editor } from "@toast-ui/react-editor";
 import Select from "react-select";
-export default function Places() {
+
+export default function Foods() {
   const dispatch = useDispatch();
-  const places = useSelector((store) => store.places.places);
-  console.log(places, "places");
-  const [editingPlaces, setEditingPlaces] = useState(null);
+  const foods = useSelector((store) => store.foods.foods);
+  console.log(foods, "foods");
+  const [editingFoods, setEditingFoods] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -34,7 +34,6 @@ export default function Places() {
     placeIds: [],
     cusinoIds: [],
   });
-
   const editorRef = useRef();
 
   const handleInputChange = (e) => {
@@ -47,12 +46,12 @@ export default function Places() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (editingPlaces) {
-      dispatch(updatePlace(formData));
-      setEditingPlaces(null);
+    if (editingFoods) {
+      dispatch(updateFood(formData));
+      setEditingFoods(null);
     } else {
       dispatch(
-        addPlace({
+        addFood({
           ...formData,
           id: formData.id || Date.now().toString(),
         })
@@ -75,18 +74,18 @@ export default function Places() {
       cusinoIds: [],
     });
     setShowForm(false);
-    setEditingPlaces(null);
+    setEditingFoods(null);
   };
 
   const handleEdit = (state) => {
     setFormData(state);
-    setEditingPlaces(state.id);
+    setEditingFoods(state.id);
     setShowForm(true);
   };
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this state?")) {
-      dispatch(deletePlace(id));
+      dispatch(deleteFood(id));
     }
   };
 
@@ -111,21 +110,20 @@ export default function Places() {
       <div className="flex justify-end items-center">
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Places
+          Add Food
         </Button>
       </div>
+
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>
-              {editingPlaces ? "Edit Places" : "Add New Places"}
-            </CardTitle>
+            <CardTitle>{editingFoods ? "Edit Food" : "Add New Food"}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="title">Title</Label>
+                  <Label htmlFor="title">Name</Label>
                   <Input
                     id="title"
                     name="title"
@@ -136,7 +134,7 @@ export default function Places() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="subtitle">Subtitle</Label>
+                  <Label htmlFor="subtitle">Local Name </Label>
                   <Input
                     id="subtitle"
                     name="subtitle"
@@ -191,7 +189,7 @@ export default function Places() {
               <div className="flex space-x-2">
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
-                  {editingPlaces ? "Update" : "Save"}
+                  {editingFoods ? "Update" : "Save"}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
                   <X className="h-4 w-4 mr-2" />
@@ -204,23 +202,23 @@ export default function Places() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {places.map((city) => (
-          <Card key={city.id}>
+        {foods.map((foods) => (
+          <Card key={foods.id}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>{city.title}</span>
+                <span>{foods.title}</span>
                 <div className="flex space-x-2">
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleEdit(city)}
+                    onClick={() => handleEdit(foods)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleDelete(city.id)}
+                    onClick={() => handleDelete(foods.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -228,12 +226,8 @@ export default function Places() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-2">{city.subtitle}</p>
-              <div className="text-xs text-gray-500">
-                <p>ID: {city.id}</p>
-                <p>Cover: {city.coverImage}</p>
-                <p>Cities: {city?.stateIds?.length || 0}</p>
-              </div>
+              <p className="text-sm text-gray-600 mb-2">{foods.subtitle}</p>
+              <div className="text-xs text-gray-500"></div>
             </CardContent>
           </Card>
         ))}

@@ -1,5 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import "@toast-ui/editor/dist/toastui-editor.css";
 
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/components/ui/button";
@@ -12,30 +13,51 @@ import {
 import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
-import { addFood, deleteFood, updateFood } from "../hooks/slice/foodSlice";
-import { Editor } from "@toast-ui/react-editor";
+import {
+  addState,
+  updateState,
+  deleteState,
+} from "../../hooks/slice/statesSlice";
 import Select from "react-select";
+import { Editor } from "@toast-ui/react-editor";
 
-export default function Foods() {
+const optionsCity = [
+  { value: "jaipur", label: "Jaipur" },
+  { value: "udaipur", label: "Udaipur" },
+];
+const optionsPlace = [
+  { value: "hawa-mahal", label: "Hawa Mahal" },
+  { value: "amber-fort", label: "Amber Fort" },
+  { value: "city-palace-udaipur", label: "City Palace Udaipur" },
+  { value: "lake-pichola", label: "Lake Pichola" },
+];
+const optionsFood = [
+  { value: "dal-baati", label: "Dal Baati Churma" },
+  { value: "ghewar", label: "Ghewar" },
+  { value: "malpua", label: "Malpua" },
+];
+
+export default function States() {
   const dispatch = useDispatch();
-  const foods = useSelector((store) => store.foods.foods);
-  console.log(foods, "foods");
-  const [editingFoods, setEditingFoods] = useState(null);
+  const states = useSelector((state) => state.states.states);
+  const [editingState, setEditingState] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
     title: "",
     subtitle: "",
-    coverImage: "",
+    coverImage: null,
     slideshowImages: [],
     about: "",
-    stateIds: [],
+    cityIds: [],
     foodIds: [],
     placeIds: [],
     cusinoIds: [],
   });
-  const editorRef = useRef();
 
+  console.log(formData, "formData in States");
+
+  const editorRef = useRef();
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -46,47 +68,18 @@ export default function Foods() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (editingFoods) {
-      dispatch(updateFood(formData));
-      setEditingFoods(null);
+    if (editingState) {
+      dispatch(updateState(formData));
+      setEditingState(null);
     } else {
       dispatch(
-        addFood({
+        addState({
           ...formData,
           id: formData.id || Date.now().toString(),
         })
       );
     }
     resetForm();
-  };
-
-  const resetForm = () => {
-    setFormData({
-      id: "",
-      title: "",
-      subtitle: "",
-      coverImage: "",
-      slideshowImages: [],
-      about: "",
-      stateIds: [],
-      foodIds: [],
-      placeIds: [],
-      cusinoIds: [],
-    });
-    setShowForm(false);
-    setEditingFoods(null);
-  };
-
-  const handleEdit = (state) => {
-    setFormData(state);
-    setEditingFoods(state.id);
-    setShowForm(true);
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this state?")) {
-      dispatch(deleteFood(id));
-    }
   };
 
   const handleFileChange = (e) => {
@@ -105,25 +98,65 @@ export default function Foods() {
     }));
   };
 
+  const handleSelectChange = (selectedOptions, name) => {
+    const values = selectedOptions.map((option) => option.value);
+    setFormData((prev) => ({
+      ...prev,
+      [name]: selectedOptions,
+    }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      id: "",
+      title: "",
+      subtitle: "",
+      coverImage: null,
+      slideshowImages: [],
+      about: "",
+      cityIds: [],
+      foodIds: [],
+      placeIds: [],
+      cusinoIds: [],
+    });
+    setShowForm(false);
+    setEditingState(null);
+  };
+
+  const handleEdit = (state) => {
+    setFormData(state);
+    setEditingState(state.id);
+    setShowForm(true);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm("Are you sure you want to delete this state?")) {
+      dispatch(deleteState(id));
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-end items-center">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900">States Management</h2>
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Food
+          Add State
         </Button>
       </div>
 
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>{editingFoods ? "Edit Food" : "Add New Food"}</CardTitle>
+            <CardTitle>
+              {editingState ? "Edit State" : "Add New State"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="title">Name</Label>
+                  <Label htmlFor="title">Title</Label>
                   <Input
                     id="title"
                     name="title"
@@ -134,7 +167,7 @@ export default function Foods() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="subtitle">Local Name </Label>
+                  <Label htmlFor="subtitle">Subtitle</Label>
                   <Input
                     id="subtitle"
                     name="subtitle"
@@ -186,10 +219,46 @@ export default function Foods() {
                 />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>City</Label>
+                  <Select
+                    isMulti
+                    options={optionsCity}
+                    value={formData.cityIds}
+                    onChange={(selected) =>
+                      handleSelectChange(selected, "cityIds")
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Places</Label>
+                  <Select
+                    isMulti
+                    options={optionsPlace}
+                    value={formData.placeIds}
+                    onChange={(selected) =>
+                      handleSelectChange(selected, "placeIds")
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Foods</Label>
+                  <Select
+                    isMulti
+                    options={optionsFood}
+                    value={formData.foodIds}
+                    onChange={(selected) =>
+                      handleSelectChange(selected, "foodIds")
+                    }
+                  />
+                </div>
+              </div>
+
               <div className="flex space-x-2">
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
-                  {editingFoods ? "Update" : "Save"}
+                  {editingState ? "Update" : "Save"}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
                   <X className="h-4 w-4 mr-2" />
@@ -201,24 +270,24 @@ export default function Foods() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {foods.map((foods) => (
-          <Card key={foods.id}>
+      <div className="grid grid-cols-1 md:  grid-cols-2 lg:grid-cols-3 gap-6">
+        {states.map((state) => (
+          <Card key={state.id}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>{foods.title}</span>
+                <span>{state.title}</span>
                 <div className="flex space-x-2">
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleEdit(foods)}
+                    onClick={() => handleEdit(state)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleDelete(foods.id)}
+                    onClick={() => handleDelete(state.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -226,8 +295,12 @@ export default function Foods() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-2">{foods.subtitle}</p>
-              <div className="text-xs text-gray-500"></div>
+              <p className="text-sm text-gray-600 mb-2">{state.subtitle}</p>
+              <div className="text-xs text-gray-500">
+                <p>ID: {state.id}</p>
+                <p>Cover: {state.coverImage}</p>
+                <p>Cities: {state.cityIds?.length || 0}</p>
+              </div>
             </CardContent>
           </Card>
         ))}
