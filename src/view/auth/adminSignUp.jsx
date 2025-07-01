@@ -18,6 +18,9 @@ import {
   CheckCircle,
 } from "lucide-react";
 import adminRoles from "../../config/adminSignUpRole";
+import { useDispatch, useSelector } from "react-redux";
+import { signupAdmin } from "../../hooks/slice/authSlice";
+import { useNavigate } from "react-router";
 
 const AdminSignUp = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -38,6 +41,7 @@ const AdminSignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const departments = [
     "Operations",
@@ -55,6 +59,8 @@ const AdminSignUp = () => {
     { title: "Security Setup", subtitle: "Account & password" },
   ];
 
+  const dispatch = useDispatch();
+  const authState = useSelector((state) => state.auth);
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -157,10 +163,18 @@ const AdminSignUp = () => {
     if (!validateStep3()) return;
 
     setIsLoading(true);
-
+    console.log("form data ", formData);
     try {
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await dispatch(signupAdmin(formData));
+
+      if (signupAdmin.fulfilled.match(result)) {
+        console.log("✅ Signup success:", authState.admin);
+        navigate("/login");
+      } else {
+        console.error("❌ Signup failed:", authState.error, result);
+        setErrors({ submit: authState.error });
+      }
 
       console.log("Registration attempt:", formData);
 

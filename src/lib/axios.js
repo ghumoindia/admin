@@ -55,10 +55,12 @@ const Api = {
 
   post: async (url, data = {}, params = {}, token = null) => {
     try {
+      console.log("Response from POST:", url);
       const response = await instance.post(url, data, {
         params,
         headers: buildHeaders(token),
       });
+      console.log("Response from POST:", response, url);
       return response.data;
     } catch (error) {
       return await catchUnauthorized(error, Api.post, url, data, params);

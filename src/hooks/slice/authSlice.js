@@ -22,7 +22,7 @@ export const signupAdmin = createAsyncThunk(
   "auth/signupAdmin",
   async (adminData, thunkAPI) => {
     try {
-      const response = await axios.post("/api/admin/signup", adminData);
+      const response = await Api.post(EndPoints.registerAdmin, adminData);
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response.data.message);
