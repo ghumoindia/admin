@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Eye,
   EyeOff,
@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import adminRoles from "../../config/adminRoles";
 import { useNavigate } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
+import { loginAdmin } from "../../hooks/slice/authSlice";
+import toast from "react-hot-toast";
 
 const AdminLogin = () => {
   const [currentStep, setCurrentStep] = useState(1); // 1: Role Selection, 2: Credentials
@@ -27,6 +30,20 @@ const AdminLogin = () => {
   const [errors, setErrors] = useState({});
 
   const navigate = useNavigate();
+
+  const dispatch = useDispatch();
+
+  const user = localStorage.getItem("accessToken");
+
+  console.log("accessToken:==>", user);
+
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  console.log("user:", user);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -90,11 +107,18 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await dispatch(loginAdmin(formData));
+      const response = result?.payload;
 
-      console.log("Login attempt:", formData);
-      alert(`Login successful as ${formData.role}!`);
+      if (response?.success) {
+        console.log("✅ Login success:", response?.data);
+        toast.success("Login successful! Redirecting to dashboard...");
+        navigate("/");
+      } else {
+        console.error("❌ Login failed:", response?.error);
+        toast.error(response?.error || "Login failed. Please try again.");
+        setErrors({ submit: response?.error });
+      }
     } catch (error) {
       setErrors({ submit: "Login failed. Please check your credentials." });
     } finally {

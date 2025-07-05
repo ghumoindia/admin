@@ -3,7 +3,7 @@ import statesReducer from "./slice/statesSlice";
 import citiesReducer from "./slice/citiesSlice";
 import placesReducer from "./slice/placesSlice";
 import foodsReducer from "./slice/foodSlice";
-import authResducer from "./slice/authSlice";
+import authReducer from "./slice/authSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,7 +11,7 @@ export const store = configureStore({
     cities: citiesReducer,
     places: placesReducer,
     foods: foodsReducer,
-    auth: authResducer,
+    auth: authReducer,
   },
 });
 

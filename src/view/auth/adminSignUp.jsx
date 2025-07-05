@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Eye,
   EyeOff,
@@ -21,6 +21,7 @@ import adminRoles from "../../config/adminSignUpRole";
 import { useDispatch, useSelector } from "react-redux";
 import { signupAdmin } from "../../hooks/slice/authSlice";
 import { useNavigate } from "react-router";
+import toast from "react-hot-toast";
 
 const AdminSignUp = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -61,6 +62,7 @@ const AdminSignUp = () => {
 
   const dispatch = useDispatch();
   const authState = useSelector((state) => state.auth);
+  console.log("authState", authState);
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -165,32 +167,43 @@ const AdminSignUp = () => {
     setIsLoading(true);
     console.log("form data ", formData);
     try {
-      // Simulate API call
       const result = await dispatch(signupAdmin(formData));
+      const response = result?.payload;
 
-      if (signupAdmin.fulfilled.match(result)) {
-        console.log("✅ Signup success:", authState.admin);
+      console.log("Result from signup:", response);
+
+      if (response?.success) {
+        console.log(
+          "✅ Signup success:",
+          response?.data?.message || "Registered"
+        );
+        toast.success("Registration successful! You can now login.");
+
+        // Uncomment if you want to redirect
         navigate("/login");
       } else {
-        console.error("❌ Signup failed:", authState.error, result);
-        setErrors({ submit: authState.error });
+        console.error("❌ Signup failed:", response?.error);
+        toast.error(
+          response?.error || "Registration failed. Please try again."
+        );
+        setErrors({ submit: response?.error });
       }
-
-      console.log("Registration attempt:", formData);
 
       const selectedRole = adminRoles.find(
         (role) => role.value === formData.role
       );
 
-      if (selectedRole?.requiresApproval) {
-        alert(
-          "Registration submitted successfully! Your account is pending approval from a Super Admin."
-        );
-      } else {
-        alert("Registration successful! You can now login to your account.");
-      }
-    } catch (error) {
-      setErrors({ submit: "Registration failed. Please try again." });
+      // if (selectedRole?.requiresApproval) {
+      //   alert(
+      //     "Registration submitted successfully! Your account is pending approval from a Super Admin."
+      //   );
+      // } else {
+      //   alert("Registration successful! You can now login to your account.");
+      // }
+    } catch (err) {
+      console.error("⚠️ Unexpected error:", err);
+      toast.error("An unexpected error occurred. Please try again.");
+      setErrors({ submit: "An unexpected error occurred." });
     } finally {
       setIsLoading(false);
     }
@@ -657,7 +670,10 @@ const AdminSignUp = () => {
         <div className="text-center mt-6">
           <p className="text-sm text-gray-500">
             Already have an account?{" "}
-            <button className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
+            <button
+              className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
+              onClick={() => navigate("/login")}
+            >
               Sign In Here
             </button>
           </p>

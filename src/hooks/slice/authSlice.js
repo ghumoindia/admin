@@ -9,10 +9,13 @@ export const loginAdmin = createAsyncThunk(
   "auth/loginAdmin",
   async (credentials, thunkAPI) => {
     try {
-      const response = await Api.post(EndPoints.registerAdmin, credentials);
-      return response.data;
+      const response = await Api.post(EndPoints.adminLogin, credentials);
+      return { success: true, data: response };
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.message);
+      return {
+        success: false,
+        error: error.response?.data?.message || "Login failed",
+      };
     }
   }
 );
@@ -22,10 +25,15 @@ export const signupAdmin = createAsyncThunk(
   "auth/signupAdmin",
   async (adminData, thunkAPI) => {
     try {
-      const response = await Api.post(EndPoints.registerAdmin, adminData);
-      return response.data;
+      const response = await Api.post(EndPoints?.registerAdmin, adminData);
+      console.log("Response from signup:=>", response);
+      return { success: true, data: response };
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.message);
+      console.log("Response from signup:=> error run", error);
+      return {
+        success: false,
+        error: error.response?.data?.message || "Signup failed",
+      };
     }
   }
 );
@@ -52,9 +60,29 @@ const authSlice = createSlice({
       })
       .addCase(loginAdmin.fulfilled, (state, action) => {
         state.loading = false;
-        state.admin = action.payload;
-        localStorage.setItem("adminToken", action.payload.token);
+
+        const response = action.payload;
+
+        if (response?.success) {
+          state.admin = response.data;
+          console.log("Login successful:", response.data);
+          const accessToken = response.data?.token;
+          const refreshToken = response.data?.refreshToken;
+
+          if (accessToken && refreshToken) {
+            // Store in localStorage
+            localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("refreshToken", refreshToken);
+
+            // ✅ If you want to store in cookies instead of localStorage:
+            // document.cookie = `accessToken=${accessToken}; path=/;`;
+            // document.cookie = `refreshToken=${refreshToken}; path=/;`;
+          }
+        } else {
+          state.error = response?.error || "Login failed";
+        }
       })
+
       .addCase(loginAdmin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -66,6 +94,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(signupAdmin.fulfilled, (state, action) => {
+        console.log("Signup successful:", action.payload, action);
         state.loading = false;
         state.admin = action.payload;
       })

@@ -45,7 +45,7 @@ export default function Foods() {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault(z);
     if (editingFoods) {
       dispatch(updateFood(formData));
       setEditingFoods(null);
