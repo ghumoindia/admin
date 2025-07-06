@@ -13,8 +13,11 @@ import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
 import { addFood, deleteFood, updateFood } from "../../hooks/slice/foodSlice";
-import { Editor } from "@toast-ui/react-editor";
+
 import Select from "react-select";
+
+import Quill from "quill";
+import RichTextEditor from "../../utils/RichTextEditor";
 
 export default function Foods() {
   const dispatch = useDispatch();
@@ -105,6 +108,15 @@ export default function Foods() {
     }));
   };
 
+  const handleImageUpload = (file, callback) => {
+    // Simulate image upload
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      callback(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end items-center">
@@ -172,17 +184,14 @@ export default function Foods() {
 
               <div>
                 <Label htmlFor="about">About</Label>
-                <Editor
-                  initialValue={formData.about}
-                  previewStyle="vertical"
-                  height="300px"
-                  initialEditType="textarea"
-                  useCommandShortcut={true}
-                  ref={editorRef}
-                  onChange={() => {
-                    const html = editorRef.current?.getInstance().getHTML();
-                    setFormData((prev) => ({ ...prev, about: html }));
-                  }}
+                <RichTextEditor
+                  value={formData.about}
+                  onChange={(content) =>
+                    setFormData((prev) => ({ ...prev, about: content }))
+                  }
+                  onImageUpload={handleImageUpload}
+                  showPreview
+                  label="Rich Content"
                 />
               </div>
 

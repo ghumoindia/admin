@@ -26,10 +26,8 @@ export const signupAdmin = createAsyncThunk(
   async (adminData, thunkAPI) => {
     try {
       const response = await Api.post(EndPoints?.registerAdmin, adminData);
-      console.log("Response from signup:=>", response);
       return { success: true, data: response };
     } catch (error) {
-      console.log("Response from signup:=> error run", error);
       return {
         success: false,
         error: error.response?.data?.message || "Signup failed",
@@ -38,6 +36,20 @@ export const signupAdmin = createAsyncThunk(
   }
 );
 
+export const logoutAdmin = createAsyncThunk("auth/logout", async (adminId) => {
+  try {
+    const response = await Api.post(EndPoints?.adminLogout, { adminId });
+    console.log("Logout response:", response);
+    return { success: true, data: response };
+  } catch (error) {
+    console.error("Logout error:", error);
+    return {
+      success: false,
+      error: error?.response?.data?.message || "Logout failed",
+    };
+  }
+});
+
 const authSlice = createSlice({
   name: "auth",
   initialState: {
@@ -45,12 +57,7 @@ const authSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {
-    logout: (state) => {
-      state.admin = null;
-      localStorage.removeItem("adminToken");
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       // Login
@@ -60,6 +67,7 @@ const authSlice = createSlice({
       })
       .addCase(loginAdmin.fulfilled, (state, action) => {
         state.loading = false;
+        state.admin = action.payload?.adminData || null;
 
         const response = action.payload;
 
@@ -68,11 +76,15 @@ const authSlice = createSlice({
           console.log("Login successful:", response.data);
           const accessToken = response.data?.token;
           const refreshToken = response.data?.refreshToken;
+          const adminData = response.data?.adminData;
+
+          console.log("adminDAta:", adminData);
 
           if (accessToken && refreshToken) {
             // Store in localStorage
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
+            localStorage.setItem("adminData", JSON.stringify(adminData));
 
             // ✅ If you want to store in cookies instead of localStorage:
             // document.cookie = `accessToken=${accessToken}; path=/;`;
@@ -99,6 +111,32 @@ const authSlice = createSlice({
         state.admin = action.payload;
       })
       .addCase(signupAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // logout
+
+      .addCase(logoutAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(logoutAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.admin = null;
+
+        const response = action.payload;
+
+        if (response?.success) {
+          console.log("Logout successful:", response.data);
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("adminData");
+        } else {
+          state.error = response?.error || "Logout failed";
+        }
+      })
+      .addCase(logoutAdmin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

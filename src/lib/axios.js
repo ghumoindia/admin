@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL,
+  baseURL: import.meta.env.VITE_BACKEND_URL,
 });
 
 let tokenRefreshed = false;
@@ -25,13 +25,9 @@ const handleUnauthorized = async (retryFn, url, data, params) => {
 const catchUnauthorized = async (error, retryFn, url, data, params) => {
   const res = error?.response;
   const message = res?.data?.message;
-
   const isUnauthorized =
-    res?.status === 401 &&
-    [
-      "Invalid token while matching the access token",
-      "associated access token with user doesn't exists in database",
-    ].includes(message);
+    (res?.status === 403 && message === "Invalid or expired token") ||
+    (res?.status === 401 && message === "Invalid or expired token");
 
   if (!tokenRefreshed && isUnauthorized) {
     return await handleUnauthorized(retryFn, url, data, params);
@@ -52,14 +48,41 @@ const Api = {
       return await catchUnauthorized(error, Api.get, url, params);
     }
   },
-
   post: async (url, data = {}, params = {}, token = null) => {
     try {
-      const response = await instance.post(url, data, {
-        params,
-        headers: buildHeaders(token),
-      });
+      let payload = data;
 
+      // If data contains files, convert to FormData
+      if (data.hasFiles) {
+        payload = new FormData();
+        for (const key in data) {
+          if (key === "hasFiles") continue; // skip helper flag
+
+          const value = data[key];
+
+          if (Array.isArray(value)) {
+            value.forEach((item) => {
+              if (item instanceof File) {
+                payload.append(`${key}`, item);
+              } else {
+                payload.append(`${key}`, JSON.stringify(item));
+              }
+            });
+          } else if (value instanceof File) {
+            payload.append(key, value);
+          } else {
+            payload.append(key, value);
+          }
+        }
+      }
+
+      const response = await instance.post(url, payload, {
+        params,
+        headers: {
+          ...buildHeaders(token),
+          ...(data.hasFiles && { "Content-Type": "multipart/form-data" }),
+        },
+      });
       return response.data;
     } catch (error) {
       return await catchUnauthorized(error, Api.post, url, data, params);
@@ -91,27 +114,38 @@ const Api = {
   },
 
   generateToken: async () => {
-    const refreshToken = localStorage.getItem("refreshToken");
+    const refreshTokenData = localStorage.getItem("refreshToken");
     try {
-      const response = await instance.get("/admin/v1/auth/generate-access", {
-        headers: {
-          Authorization: `Bearer ${refreshToken}`,
-        },
-      });
+      const response = await instance.post(
+        "/admin/v1/auth/refresh-token",
+        {}, // empty body if no data to send
+        {
+          headers: {
+            Authorization: `Bearer ${refreshTokenData}`,
+          },
+        }
+      );
 
-      const { access_token, refresh_token } = response.data.data;
-      localStorage.setItem("accessToken", access_token);
-      localStorage.setItem("refreshToken", refresh_token);
-      return { status: "authorized", token: access_token };
+      const accessToken = response.data?.token;
+      const refreshToken = response.data?.refreshToken;
+      const adminData = response.data?.adminData;
+      if (accessToken && refreshToken) {
+        // Store in localStorage
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("adminData", JSON.stringify(adminData));
+
+        // ✅ If you want to store in cookies instead of localStorage:
+        // document.cookie = `accessToken=${accessToken}; path=/;`;
+        // document.cookie = `refreshToken=${refreshToken}; path=/;`;
+      }
+      return { status: "authorized", token: accessToken };
     } catch (error) {
-      if (error.response?.status === 401) {
-        [
-          "accessToken",
-          "refreshToken",
-          "confidentials",
-          "activeDropdown",
-          "activeMenuIndex",
-        ].forEach(localStorage.removeItem);
+      console.error("Error refreshing token:", error);
+      if (error.response?.status === 403) {
+        ["accessToken", "refreshToken", "adminData"].forEach(
+          localStorage.removeItem
+        );
         window.location.reload();
         return { status: "unauthorized" };
       }

@@ -1,6 +1,5 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import "@toast-ui/editor/dist/toastui-editor.css";
 
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/components/ui/button";
@@ -13,13 +12,18 @@ import {
 import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
-import {
-  addState,
-  updateState,
-  deleteState,
-} from "../../hooks/slice/statesSlice";
+
 import Select from "react-select";
-import { Editor } from "@toast-ui/react-editor";
+
+import Quill from "quill";
+import MyLexicalEditor from "../../utils/RichTextEditor";
+import RichTextEditor from "../../utils/RichTextEditor";
+import {
+  createState,
+  fetchStates,
+  updateStateById,
+} from "../../hooks/slice/statesSlice";
+import toast from "react-hot-toast";
 
 const optionsCity = [
   { value: "jaipur", label: "Jaipur" },
@@ -40,6 +44,8 @@ const optionsFood = [
 export default function States() {
   const dispatch = useDispatch();
   const states = useSelector((state) => state.states.states);
+  const loading = useSelector((state) => state.states.loading);
+  const error = useSelector((state) => state.states.error);
   const [editingState, setEditingState] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -53,9 +59,12 @@ export default function States() {
     foodIds: [],
     placeIds: [],
     cusinoIds: [],
+    hasFiles: true,
   });
 
-  console.log(formData, "formData in States");
+  useEffect(() => {
+    dispatch(fetchStates());
+  }, []);
 
   const editorRef = useRef();
   const handleInputChange = (e) => {
@@ -66,19 +75,38 @@ export default function States() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (editingState) {
-      dispatch(updateState(formData));
-      setEditingState(null);
-    } else {
-      dispatch(
-        addState({
-          ...formData,
-          id: formData.id || Date.now().toString(),
+      // Update existing state via API
+      const result = await dispatch(
+        updateStateById({
+          id: editingState.id, // Ensure editingState has an `id`
+          data: formData,
         })
       );
+
+      if (result?.payload?.message) {
+        toast.success("State updated successfully!");
+        console.log("✅ State updated successfully");
+      } else {
+        toast.error("Failed to update state: " + result.payload.error);
+        console.error("❌ Failed to update state:", result.payload.error);
+      }
+
+      setEditingState(null);
+    } else {
+      const result = await dispatch(createState(formData));
+      if (result?.payload?.success) {
+        toast.success("State created successfully!");
+        console.log("✅ State created successfully");
+      } else {
+        toast.error("Failed to create state: " + result?.error?.message);
+        console.error("❌ Failed to create state:", result?.error?.message);
+      }
     }
+
     resetForm();
   };
 
@@ -118,6 +146,7 @@ export default function States() {
       foodIds: [],
       placeIds: [],
       cusinoIds: [],
+      hasFiles: true,
     });
     setShowForm(false);
     setEditingState(null);
@@ -134,6 +163,24 @@ export default function States() {
       dispatch(deleteState(id));
     }
   };
+
+  const handleImageUpload = (file, callback) => {
+    // Simulate image upload
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      callback(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  useEffect(() => {
+    if (states && states.length > 0) {
+      console.log("Fetched states:", states);
+    }
+  }, [states]);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
 
   return (
     <div className="space-y-6">
@@ -205,17 +252,14 @@ export default function States() {
 
               <div>
                 <Label htmlFor="about">About</Label>
-                <Editor
-                  initialValue={formData.about}
-                  previewStyle="vertical"
-                  height="300px"
-                  initialEditType="textarea"
-                  useCommandShortcut={true}
-                  ref={editorRef}
-                  onChange={() => {
-                    const html = editorRef.current?.getInstance().getHTML();
-                    setFormData((prev) => ({ ...prev, about: html }));
-                  }}
+                <RichTextEditor
+                  value={formData.about}
+                  onChange={(content) =>
+                    setFormData((prev) => ({ ...prev, about: content }))
+                  }
+                  onImageUpload={handleImageUpload}
+                  showPreview
+                  label="Rich Content"
                 />
               </div>
 
@@ -270,12 +314,15 @@ export default function States() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:  grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {states.map((state) => (
-          <Card key={state.id}>
+          <Card key={state._id}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>{state.title}</span>
+                <div>
+                  <h3 className="text-lg font-semibold">{state.title}</h3>
+                  <p className="text-sm text-gray-600">{state.subtitle}</p>
+                </div>
                 <div className="flex space-x-2">
                   <Button
                     size="icon"
@@ -287,18 +334,30 @@ export default function States() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleDelete(state.id)}
+                    onClick={() => handleDelete(state._id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardTitle>
             </CardHeader>
+
             <CardContent>
-              <p className="text-sm text-gray-600 mb-2">{state.subtitle}</p>
+              {state.coverImage?.url ? (
+                <img
+                  src={`${import.meta.env.VITE_BACKEND_URL}${
+                    state.coverImage.url
+                  }`}
+                  alt={state.title}
+                  className="w-full h-40 object-cover rounded-md mb-2"
+                />
+              ) : (
+                <div className="w-full h-40 bg-gray-200 flex items-center justify-center rounded-md mb-2">
+                  <span className="text-gray-500 text-sm">No Image</span>
+                </div>
+              )}
               <div className="text-xs text-gray-500">
-                <p>ID: {state.id}</p>
-                <p>Cover: {state.coverImage}</p>
+                <p>ID: {state._id}</p>
                 <p>Cities: {state.cityIds?.length || 0}</p>
               </div>
             </CardContent>

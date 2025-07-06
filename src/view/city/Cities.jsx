@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/components/ui/button";
 import {
@@ -13,8 +12,11 @@ import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
 import { addCity, deleteCity, updateCity } from "../../hooks/slice/citiesSlice";
-import { Editor } from "@toast-ui/react-editor";
+
 import Select from "react-select";
+import Quill from "quill";
+import MyLexicalEditor from "../../utils/RichTextEditor";
+import RichTextEditor from "../../utils/RichTextEditor";
 
 const optionsState = [
   { value: "andhra-pradesh", label: "Andhra Pradesh" },
@@ -65,6 +67,7 @@ const optionsFood = [
 export default function Cities() {
   const dispatch = useDispatch();
   const cities = useSelector((cities) => cities.cities.cities);
+  const [content3, setContent3] = useState("");
 
   const [editingCities, setEditingCities] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -160,6 +163,15 @@ export default function Cities() {
     }));
   };
 
+  const handleImageUpload = (file, callback) => {
+    // Simulate image upload
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      callback(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end items-center">
@@ -229,17 +241,15 @@ export default function Cities() {
 
               <div>
                 <Label htmlFor="about">About</Label>
-                <Editor
-                  initialValue={formData.about}
-                  previewStyle="vertical"
-                  height="300px"
-                  initialEditType="textarea"
-                  useCommandShortcut={true}
-                  ref={editorRef}
-                  onChange={() => {
-                    const html = editorRef.current?.getInstance().getHTML();
-                    setFormData((prev) => ({ ...prev, about: html }));
-                  }}
+
+                <RichTextEditor
+                  value={formData.about}
+                  onChange={(content) =>
+                    setFormData((prev) => ({ ...prev, about: content }))
+                  }
+                  onImageUpload={handleImageUpload}
+                  showPreview
+                  label="Rich Content"
                 />
               </div>
 
