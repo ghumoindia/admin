@@ -20,25 +20,28 @@ import MyLexicalEditor from "../../utils/RichTextEditor";
 import RichTextEditor from "../../utils/RichTextEditor";
 import {
   createState,
+  deleteStateById,
   fetchStates,
   updateStateById,
 } from "../../hooks/slice/statesSlice";
 import toast from "react-hot-toast";
 
 const optionsCity = [
-  { value: "jaipur", label: "Jaipur" },
-  { value: "udaipur", label: "Udaipur" },
+  { value: "60d5f4837d8e2e3b887e67d1", label: "Jaipur" },
+  { value: "60d5f4837d8e2e3b887e67d2", label: "Udaipur" },
 ];
+
 const optionsPlace = [
-  { value: "hawa-mahal", label: "Hawa Mahal" },
-  { value: "amber-fort", label: "Amber Fort" },
-  { value: "city-palace-udaipur", label: "City Palace Udaipur" },
-  { value: "lake-pichola", label: "Lake Pichola" },
+  { value: "60d5f4f37d8e2e3b887e67d3", label: "Hawa Mahal" },
+  { value: "60d5f4f37d8e2e3b887e67d4", label: "Amber Fort" },
+  { value: "60d5f4f37d8e2e3b887e67d5", label: "City Palace Udaipur" },
+  { value: "60d5f4f37d8e2e3b887e67d6", label: "Lake Pichola" },
 ];
+
 const optionsFood = [
-  { value: "dal-baati", label: "Dal Baati Churma" },
-  { value: "ghewar", label: "Ghewar" },
-  { value: "malpua", label: "Malpua" },
+  { value: "60d5f5037d8e2e3b887e67d7", label: "Dal Baati Churma" },
+  { value: "60d5f5037d8e2e3b887e67d8", label: "Ghewar" },
+  { value: "60d5f5037d8e2e3b887e67d9", label: "Malpua" },
 ];
 
 export default function States() {
@@ -65,6 +68,15 @@ export default function States() {
   useEffect(() => {
     dispatch(fetchStates());
   }, []);
+
+  const getData = () => {
+    try {
+      dispatch(fetchStates());
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to fetch data: " + error.message);
+    }
+  };
 
   const editorRef = useRef();
   const handleInputChange = (e) => {
@@ -158,9 +170,20 @@ export default function States() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this state?")) {
-      dispatch(deleteState(id));
+  const handleDelete = async (id) => {
+    try {
+      const result = await dispatch(deleteStateById(id));
+      console.log("Delete result:", result);
+      if (result?.payload?.success) {
+        toast.success("state delete  successfully");
+        getData();
+      } else {
+        toast.error("Failed to delete state: " + result?.error?.message);
+        console.error("❌ Failed to delete state:", result?.error?.message);
+      }
+    } catch (error) {
+      toast.error("Error deleting state: " + error.message);
+      console.error("❌ Error deleting state:");
     }
   };
 
@@ -184,8 +207,8 @@ export default function States() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">States Management</h2>
+      <div className="flex justify-end  items-center">
+        {/* <h2 className="text-2xl font-bold text-gray-900">States Management</h2> */}
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add State

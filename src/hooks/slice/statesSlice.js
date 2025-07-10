@@ -40,8 +40,10 @@ export const updateStateById = createAsyncThunk(
 export const deleteStateById = createAsyncThunk(
   "states/deleteState",
   async (id) => {
-    await Api.delete(`${EndPoints.deleteState}/${id}`);
-    return id;
+    console.log("State deleted id", id);
+    const response = await Api.delete(`${EndPoints.deleteState}/${id}`);
+    console.log("State deleted:", response);
+    return response;
   }
 );
 
@@ -110,6 +112,7 @@ const statesSlice = createSlice({
         state.error = null;
       })
       .addCase(deleteStateById.fulfilled, (state, action) => {
+        console.log(" response data action ", action.payload);
         state.loading = false;
         state.states = state.states.filter((s) => s.id !== action.payload);
       })
