@@ -31,8 +31,9 @@ export const fetchSingleState = createAsyncThunk(
 export const updateStateById = createAsyncThunk(
   "states/updateState",
   async ({ id, data }) => {
+    console.log("State updated id", id, "data", data);
     const response = await Api.put(`${EndPoints.updateState}/${id}`, data);
-    return response.data;
+    return response;
   }
 );
 
@@ -96,10 +97,7 @@ const statesSlice = createSlice({
       })
       .addCase(updateStateById.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.states.findIndex((s) => s.id === action.payload.id);
-        if (index !== -1) {
-          state.states[index] = action.payload;
-        }
+        console.log("State updated:", action.payload);
       })
       .addCase(updateStateById.rejected, (state, action) => {
         state.loading = false;

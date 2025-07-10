@@ -94,7 +94,7 @@ export default function States() {
       // Update existing state via API
       const result = await dispatch(
         updateStateById({
-          id: editingState.id, // Ensure editingState has an `id`
+          id: editingState, // Ensure editingState has an `id`
           data: formData,
         })
       );
@@ -102,6 +102,7 @@ export default function States() {
       if (result?.payload?.message) {
         toast.success("State updated successfully!");
         console.log("✅ State updated successfully");
+        getData();
       } else {
         toast.error("Failed to update state: " + result.payload.error);
         console.error("❌ Failed to update state:", result.payload.error);
@@ -165,8 +166,9 @@ export default function States() {
   };
 
   const handleEdit = (state) => {
+    console.log("Editing state:", state, state._id);
     setFormData(state);
-    setEditingState(state.id);
+    setEditingState(state._id);
     setShowForm(true);
   };
 
@@ -205,6 +207,7 @@ export default function States() {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
 
+  console.log("showForm:", showForm, editingState);
   return (
     <div className="space-y-6">
       <div className="flex justify-end  items-center">

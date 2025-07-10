@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/components/ui/button";
@@ -11,12 +11,18 @@ import {
 import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
-import { addCity, deleteCity, updateCity } from "../../hooks/slice/citiesSlice";
+import {
+  addCity,
+  deleteCity,
+  fetchCities,
+  updateCity,
+} from "../../hooks/slice/citiesSlice";
 
 import Select from "react-select";
 import Quill from "quill";
 import MyLexicalEditor from "../../utils/RichTextEditor";
 import RichTextEditor from "../../utils/RichTextEditor";
+import toast from "react-hot-toast";
 
 const optionsState = [
   { value: "andhra-pradesh", label: "Andhra Pradesh" },
@@ -67,6 +73,8 @@ const optionsFood = [
 export default function Cities() {
   const dispatch = useDispatch();
   const cities = useSelector((cities) => cities.cities.cities);
+  const loading = useSelector((state) => state.cities.loading);
+  const error = useSelector((state) => state.cities.error);
   const [content3, setContent3] = useState("");
 
   const [editingCities, setEditingCities] = useState(null);
@@ -82,9 +90,9 @@ export default function Cities() {
     foodIds: [],
     placeIds: [],
     cusinoIds: [],
+    hasFiles: true,
   });
 
-  console.log(formData, "formData in Cities");
   const editorRef = useRef();
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -94,19 +102,39 @@ export default function Cities() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (editingCities) {
-      dispatch(updateCity(formData));
-      setEditingCities(null);
-    } else {
-      dispatch(
-        addCity({
-          ...formData,
-          id: formData.id || Date.now().toString(),
+      const result = await dispatch(
+        updateCity({
+          id: editingCities, // Ensure editingState has an `id`
+          data: formData,
         })
       );
+
+      if (result?.payload?.success) {
+        toast.success("City updated successfully!");
+
+        getData();
+      } else {
+        toast.error("Failed to update City: " + result.payload.error);
+        console.error("❌ Failed to update City:", result.payload.error);
+      }
+
+      setEditingCities(null);
+    } else {
+      const result = await dispatch(addCity(formData));
+      if (result?.payload?.success) {
+        toast.success("City created successfully!");
+        setShowForm(false);
+        resetForm();
+      } else {
+        toast.error("Failed to create City: " + result?.error?.message);
+        console.error("❌ Failed to create City:", result?.error?.message);
+      }
     }
+
     resetForm();
   };
 
@@ -122,20 +150,45 @@ export default function Cities() {
       foodIds: [],
       placeIds: [],
       cusinoIds: [],
+      hasFiles: true,
     });
     setShowForm(false);
     setEditingCities(null);
   };
 
-  const handleEdit = (state) => {
-    setFormData(state);
-    setEditingCities(state.id);
+  useEffect(() => {
+    dispatch(fetchCities());
+  }, []);
+
+  const getData = () => {
+    try {
+      dispatch(fetchCities());
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to fetch data: " + error.message);
+    }
+  };
+
+  const handleEdit = (city) => {
+    setFormData(city);
+    setEditingCities(city._id);
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this state?")) {
-      dispatch(deleteCity(id));
+  const handleDelete = async (id) => {
+    try {
+      const result = await dispatch(deleteCity(id));
+
+      if (result?.payload?.success) {
+        toast.success("City delete  successfully");
+        getData();
+      } else {
+        toast.error("Failed to delete City: " + result?.error?.message);
+        console.error("❌ Failed to delete City:", result?.error?.message);
+      }
+    } catch (error) {
+      toast.error("Error deleting City: " + error.message);
+      console.error("❌ Error deleting City:");
     }
   };
 
@@ -169,7 +222,10 @@ export default function Cities() {
     reader.onload = (e) => {
       callback(e.target.result);
     };
-    reader.readAsDataURL(file);
+    reader;
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error: {error}</p>;
   };
 
   return (
@@ -306,10 +362,13 @@ export default function Cities() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cities.map((city) => (
-          <Card key={city.id}>
+          <Card key={city._id}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>{city.title}</span>
+                <div>
+                  <h3 className="text-lg font-semibold">{city.title}</h3>
+                  <p className="text-sm text-gray-600">{city.subtitle}</p>
+                </div>
                 <div className="flex space-x-2">
                   <Button
                     size="icon"
@@ -321,19 +380,31 @@ export default function Cities() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleDelete(city.id)}
+                    onClick={() => handleDelete(city._id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardTitle>
             </CardHeader>
+
             <CardContent>
-              <p className="text-sm text-gray-600 mb-2">{city.subtitle}</p>
+              {city.coverImage?.url ? (
+                <img
+                  src={`${import.meta.env.VITE_BACKEND_URL}${
+                    city.coverImage.url
+                  }`}
+                  alt={city.title}
+                  className="w-full h-40 object-cover rounded-md mb-2"
+                />
+              ) : (
+                <div className="w-full h-40 bg-gray-200 flex items-center justify-center rounded-md mb-2">
+                  <span className="text-gray-500 text-sm">No Image</span>
+                </div>
+              )}
               <div className="text-xs text-gray-500">
-                <p>City Name : {city.title}</p>
-                {/* <p>Cover: {city?.coverImage}</p> */}
-                <p>Cities: {city?.stateIds?.length || 0}</p>
+                <p>ID: {city._id}</p>
+                <p>Cities: {city.cityIds?.length || 0}</p>
               </div>
             </CardContent>
           </Card>

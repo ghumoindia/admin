@@ -9,6 +9,11 @@ const EndPoints = {
   deleteState: "/admin/v1/state/deleteStateById",
   fetchSingleState: "/admin/v1/state/getStateByID",
   generateAccessToken: "/admin/v1/auth/refresh-token",
+  createCity: "/admin/v1/cities/createCity",
+  fetchAllCities: "/admin/v1/cities/allCities",
+  fetchSingleCity: "/admin/v1/cities/getCityByID",
+  updateCity: "/admin/v1/cities/updateCityById",
+  deleteCity: "/admin/v1/cities/deleteCityById",
 };
 
 export default EndPoints;
