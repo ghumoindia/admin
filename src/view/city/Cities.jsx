@@ -23,52 +23,9 @@ import Quill from "quill";
 import MyLexicalEditor from "../../utils/RichTextEditor";
 import RichTextEditor from "../../utils/RichTextEditor";
 import toast from "react-hot-toast";
-
-const optionsState = [
-  { value: "andhra-pradesh", label: "Andhra Pradesh" },
-  { value: "arunachal-pradesh", label: "Arunachal Pradesh" },
-  { value: "assam", label: "Assam" },
-  { value: "bihar", label: "Bihar" },
-  { value: "chhattisgarh", label: "Chhattisgarh" },
-  { value: "goa", label: "Goa" },
-  { value: "gujarat", label: "Gujarat" },
-  { value: "haryana", label: "Haryana" },
-  { value: "himachal-pradesh", label: "Himachal Pradesh" },
-  { value: "jharkhand", label: "Jharkhand" },
-  { value: "karnataka", label: "Karnataka" },
-  { value: "kerala", label: "Kerala" },
-  { value: "madhya-pradesh", label: "Madhya Pradesh" },
-  { value: "maharashtra", label: "Maharashtra" },
-  { value: "manipur", label: "Manipur" },
-  { value: "meghalaya", label: "Meghalaya" },
-  { value: "mizoram", label: "Mizoram" },
-  { value: "nagaland", label: "Nagaland" },
-  { value: "odisha", label: "Odisha" },
-  { value: "punjab", label: "Punjab" },
-  { value: "rajasthan", label: "Rajasthan" },
-  { value: "sikkim", label: "Sikkim" },
-  { value: "tamil-nadu", label: "Tamil Nadu" },
-  { value: "telangana", label: "Telangana" },
-  { value: "tripura", label: "Tripura" },
-  { value: "uttar-pradesh", label: "Uttar Pradesh" },
-  { value: "uttarakhand", label: "Uttarakhand" },
-  { value: "west-bengal", label: "West Bengal" },
-  { value: "delhi", label: "Delhi" },
-  { value: "jammu-kashmir", label: "Jammu & Kashmir" },
-  { value: "ladakh", label: "Ladakh" },
-];
-
-const optionsPlace = [
-  { value: "hawa-mahal", label: "Hawa Mahal" },
-  { value: "amber-fort", label: "Amber Fort" },
-  { value: "city-palace-udaipur", label: "City Palace Udaipur" },
-  { value: "lake-pichola", label: "Lake Pichola" },
-];
-const optionsFood = [
-  { value: "dal-baati", label: "Dal Baati Churma" },
-  { value: "ghewar", label: "Ghewar" },
-  { value: "malpua", label: "Malpua" },
-];
+import { fetchStates } from "../../hooks/slice/statesSlice";
+import { fetchPlaces } from "../../hooks/slice/placesSlice";
+import { fetchFoods } from "../../hooks/slice/foodSlice";
 
 export default function Cities() {
   const dispatch = useDispatch();
@@ -76,6 +33,12 @@ export default function Cities() {
   const loading = useSelector((state) => state.cities.loading);
   const error = useSelector((state) => state.cities.error);
   const [content3, setContent3] = useState("");
+  const [optionsState, setOptionsState] = useState([]);
+  const [optionsPlace, setOptionsPlace] = useState([]);
+  const [optionsFood, setOptionsFood] = useState([]);
+  const [selectedPlaces, setSelectedPlaces] = useState([]);
+  const [selectedFoods, setSelectedFoods] = useState([]);
+  const [selectedState, setSelectedState] = useState([]);
 
   const [editingCities, setEditingCities] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -104,12 +67,18 @@ export default function Cities() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const payload = {
+      ...formData,
+      stateIds: JSON.stringify(selectedState.map((c) => c.value)),
+      placeIds: JSON.stringify(selectedPlaces.map((p) => p.value)),
+      foodIds: JSON.stringify(selectedFoods.map((f) => f.value)),
+    };
 
     if (editingCities) {
       const result = await dispatch(
         updateCity({
           id: editingCities, // Ensure editingState has an `id`
-          data: formData,
+          data: payload,
         })
       );
 
@@ -124,7 +93,7 @@ export default function Cities() {
 
       setEditingCities(null);
     } else {
-      const result = await dispatch(addCity(formData));
+      const result = await dispatch(addCity(payload));
       if (result?.payload?.success) {
         toast.success("City created successfully!");
         setShowForm(false);
@@ -152,12 +121,52 @@ export default function Cities() {
       cusinoIds: [],
       hasFiles: true,
     });
+
+    setSelectedState([]);
+    setSelectedPlaces([]);
+    setSelectedFoods([]);
     setShowForm(false);
     setEditingCities(null);
   };
 
+  const getAllData = async () => {
+    try {
+      const optionsStateData = (await dispatch(fetchStates())) || [];
+      const optionsPlaceData = (await dispatch(fetchPlaces())) || [];
+      const optionsFoodData = (await dispatch(fetchFoods())) || [];
+      console.log(
+        "Fetched options:",
+        optionsStateData,
+        optionsPlaceData,
+        optionsFoodData
+      );
+      setOptionsState(
+        optionsStateData?.payload?.states?.map((state) => ({
+          value: state._id,
+          label: state.title,
+        })) || []
+      );
+      setOptionsPlace(
+        optionsPlaceData?.payload?.map((place) => ({
+          value: place._id,
+          label: place.title,
+        })) || []
+      );
+      setOptionsFood(
+        optionsFoodData?.payload?.map((food) => ({
+          value: food._id,
+          label: food.title,
+        })) || []
+      );
+    } catch (error) {
+      console.error("Error fetching options:", error);
+      toast.error("Failed to fetch options: " + error.message);
+    }
+  };
+
   useEffect(() => {
     dispatch(fetchCities());
+    getAllData();
   }, []);
 
   const getData = () => {
@@ -169,10 +178,44 @@ export default function Cities() {
     }
   };
 
+  // const handleEdit = (city) => {
+  //   setFormData(city);
+  //   setEditingCities(city._id);
+  //   setShowForm(true);
+  // };
+
   const handleEdit = (city) => {
-    setFormData(city);
+    console.log("Editing city:====>", city);
+
+    const stateIds = optionsState?.filter((s) =>
+      city?.stateIds.some((idObj) => idObj === s.value)
+    );
+
+    const placeIds = optionsPlace?.filter((p) =>
+      city.placeIds.some((idObj) => idObj === p.value)
+    );
+
+    const foodIds = optionsFood?.filter((f) =>
+      city.foodIds.some((idObj) => idObj === f.value)
+    );
+
+    const payload = {
+      ...city,
+      stateIds,
+      placeIds,
+      foodIds,
+    };
+
+    console.log("Editing city:", payload, city);
+
+    setFormData(payload);
     setEditingCities(city._id);
     setShowForm(true);
+
+    // Reset selected states
+    setSelectedState(stateIds);
+    setSelectedPlaces(placeIds);
+    setSelectedFoods(foodIds);
   };
 
   const handleDelete = async (id) => {
@@ -223,10 +266,10 @@ export default function Cities() {
       callback(e.target.result);
     };
     reader;
-
-    if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error: {error}</p>;
   };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
 
   return (
     <div className="space-y-6">
@@ -315,10 +358,8 @@ export default function Cities() {
                   <Select
                     isMulti
                     options={optionsState}
-                    value={formData.stateIds}
-                    onChange={(selected) =>
-                      handleSelectChange(selected, "stateIds")
-                    }
+                    value={selectedState}
+                    onChange={(selected) => setSelectedState(selected)}
                   />
                 </div>
                 <div>
@@ -326,10 +367,8 @@ export default function Cities() {
                   <Select
                     isMulti
                     options={optionsPlace}
-                    value={formData.placeIds}
-                    onChange={(selected) =>
-                      handleSelectChange(selected, "placeIds")
-                    }
+                    value={selectedPlaces}
+                    onChange={(selected) => setSelectedPlaces(selected)}
                   />
                 </div>
                 <div>
@@ -337,10 +376,8 @@ export default function Cities() {
                   <Select
                     isMulti
                     options={optionsFood}
-                    value={formData.foodIds}
-                    onChange={(selected) =>
-                      handleSelectChange(selected, "foodIds")
-                    }
+                    value={selectedFoods}
+                    onChange={(selected) => setSelectedFoods(selected)}
                   />
                 </div>
               </div>

@@ -18,25 +18,25 @@ export default function Dashboard() {
   const stats = [
     {
       name: "Total States",
-      value: states.length,
+      value: states?.length,
       icon: MapPin,
       color: "text-blue-600",
     },
     {
       name: "Total Cities",
-      value: cities.length,
+      value: cities?.length,
       icon: Building2,
       color: "text-green-600",
     },
     {
       name: "Total Places",
-      value: places.length,
+      value: places?.length,
       icon: Camera,
       color: "text-purple-600",
     },
     {
       name: "Total Foods",
-      value: foods.length,
+      value: foods?.length,
       icon: Utensils,
       color: "text-orange-600",
     },
@@ -95,7 +95,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {cities.slice(0, 3).map((city) => (
+              {cities?.slice(0, 3)?.map((city) => (
                 <div key={city.id} className="flex items-center space-x-3">
                   <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
                     <Building2 className="h-4 w-4 text-green-600" />

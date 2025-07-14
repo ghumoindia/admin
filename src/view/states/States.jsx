@@ -25,24 +25,9 @@ import {
   updateStateById,
 } from "../../hooks/slice/statesSlice";
 import toast from "react-hot-toast";
-
-const optionsCity = [
-  { value: "60d5f4837d8e2e3b887e67d1", label: "Jaipur" },
-  { value: "60d5f4837d8e2e3b887e67d2", label: "Udaipur" },
-];
-
-const optionsPlace = [
-  { value: "60d5f4f37d8e2e3b887e67d3", label: "Hawa Mahal" },
-  { value: "60d5f4f37d8e2e3b887e67d4", label: "Amber Fort" },
-  { value: "60d5f4f37d8e2e3b887e67d5", label: "City Palace Udaipur" },
-  { value: "60d5f4f37d8e2e3b887e67d6", label: "Lake Pichola" },
-];
-
-const optionsFood = [
-  { value: "60d5f5037d8e2e3b887e67d7", label: "Dal Baati Churma" },
-  { value: "60d5f5037d8e2e3b887e67d8", label: "Ghewar" },
-  { value: "60d5f5037d8e2e3b887e67d9", label: "Malpua" },
-];
+import { fetchPlaces } from "../../hooks/slice/placesSlice";
+import { fetchCities } from "../../hooks/slice/citiesSlice";
+import { fetchFoods } from "../../hooks/slice/foodSlice";
 
 export default function States() {
   const dispatch = useDispatch();
@@ -51,6 +36,12 @@ export default function States() {
   const error = useSelector((state) => state.states.error);
   const [editingState, setEditingState] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [optionsCity, setOptionsCity] = useState([]);
+  const [optionsPlace, setOptionsPlace] = useState([]);
+  const [optionsFood, setOptionsFood] = useState([]);
+  const [selectedPlaces, setSelectedPlaces] = useState([]);
+  const [selectedFoods, setSelectedFoods] = useState([]);
+  const [selectedCities, setSelectedCities] = useState([]);
   const [formData, setFormData] = useState({
     id: "",
     title: "",
@@ -65,8 +56,45 @@ export default function States() {
     hasFiles: true,
   });
 
+  const getAllData = async () => {
+    try {
+      const optionsCityData = (await dispatch(fetchCities())) || [];
+      const optionsPlaceData = (await dispatch(fetchPlaces())) || [];
+      const optionsFoodData = (await dispatch(fetchFoods())) || [];
+      console.log(
+        "Fetched options:",
+        optionsCityData,
+        optionsPlaceData,
+        optionsFoodData
+      );
+      setOptionsCity(
+        optionsCityData?.payload?.map((city) => ({
+          value: city._id,
+          label: city.title,
+        })) || []
+      );
+      setOptionsPlace(
+        optionsPlaceData?.payload?.map((place) => ({
+          value: place._id,
+          label: place.title,
+        })) || []
+      );
+      setOptionsFood(
+        optionsFoodData?.payload?.map((food) => ({
+          value: food._id,
+          label: food.title,
+        })) || []
+      );
+    } catch (error) {
+      console.error("Error fetching options:", error);
+      toast.error("Failed to fetch options: " + error.message);
+    }
+  };
+
+  console.log("Fetched options:", optionsCity, optionsPlace, optionsFood);
   useEffect(() => {
     dispatch(fetchStates());
+    getAllData();
   }, []);
 
   const getData = () => {
@@ -90,12 +118,20 @@ export default function States() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const payload = {
+      ...formData,
+      cityIds: JSON.stringify(selectedCities.map((c) => c.value)),
+      placeIds: JSON.stringify(selectedPlaces.map((p) => p.value)),
+      foodIds: JSON.stringify(selectedFoods.map((f) => f.value)),
+    };
+    console.log("Submitting form with payload:", payload);
+
     if (editingState) {
       // Update existing state via API
       const result = await dispatch(
         updateStateById({
           id: editingState, // Ensure editingState has an `id`
-          data: formData,
+          data: payload,
         })
       );
 
@@ -109,8 +145,11 @@ export default function States() {
       }
 
       setEditingState(null);
+      setShowForm(false);
     } else {
-      const result = await dispatch(createState(formData));
+      console.log("Creating new state with payload:", payload);
+      const result = await dispatch(createState(payload));
+      console.log("Create result:", result);
       if (result?.payload?.success) {
         toast.success("State created successfully!");
         console.log("✅ State created successfully");
@@ -140,7 +179,7 @@ export default function States() {
   };
 
   const handleSelectChange = (selectedOptions, name) => {
-    const values = selectedOptions.map((option) => option.value);
+    const values = selectedOptions.map((option) => option.value).join(",");
     setFormData((prev) => ({
       ...prev,
       [name]: selectedOptions,
@@ -161,15 +200,44 @@ export default function States() {
       cusinoIds: [],
       hasFiles: true,
     });
+    setSelectedCities([]);
+    setSelectedPlaces([]);
+    setSelectedFoods([]);
     setShowForm(false);
     setEditingState(null);
   };
-
   const handleEdit = (state) => {
-    console.log("Editing state:", state, state._id);
-    setFormData(state);
+    console.log("Editing state:====>", state);
+
+    const cityIds = optionsCity.filter((c) =>
+      state.cityIds.some((idObj) => idObj._id === c.value)
+    );
+
+    const placeIds = optionsPlace.filter((p) =>
+      state.placeIds.some((idObj) => idObj._id === p.value)
+    );
+
+    const foodIds = optionsFood.filter((f) =>
+      state.foodIds.some((idObj) => idObj._id === f.value)
+    );
+
+    const payload = {
+      ...state,
+      cityIds,
+      placeIds,
+      foodIds,
+    };
+
+    console.log("Editing state:", payload, state);
+
+    setFormData(payload);
     setEditingState(state._id);
     setShowForm(true);
+
+    // Reset selected states
+    setSelectedCities(cityIds);
+    setSelectedPlaces(placeIds);
+    setSelectedFoods(foodIds);
   };
 
   const handleDelete = async (id) => {
@@ -295,10 +363,8 @@ export default function States() {
                   <Select
                     isMulti
                     options={optionsCity}
-                    value={formData.cityIds}
-                    onChange={(selected) =>
-                      handleSelectChange(selected, "cityIds")
-                    }
+                    value={selectedCities}
+                    onChange={(selected) => setSelectedCities(selected)}
                   />
                 </div>
                 <div>
@@ -306,10 +372,8 @@ export default function States() {
                   <Select
                     isMulti
                     options={optionsPlace}
-                    value={formData.placeIds}
-                    onChange={(selected) =>
-                      handleSelectChange(selected, "placeIds")
-                    }
+                    value={selectedPlaces}
+                    onChange={(selected) => setSelectedPlaces(selected)}
                   />
                 </div>
                 <div>
@@ -317,10 +381,8 @@ export default function States() {
                   <Select
                     isMulti
                     options={optionsFood}
-                    value={formData.foodIds}
-                    onChange={(selected) =>
-                      handleSelectChange(selected, "foodIds")
-                    }
+                    value={selectedFoods}
+                    onChange={(selected) => setSelectedFoods(selected)}
                   />
                 </div>
               </div>

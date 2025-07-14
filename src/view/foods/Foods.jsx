@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
@@ -12,16 +12,23 @@ import {
 import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
-import { addFood, deleteFood, updateFood } from "../../hooks/slice/foodSlice";
+import {
+  addFood,
+  deleteFood,
+  fetchFoods,
+  updateFood,
+} from "../../hooks/slice/foodSlice";
 
 import Select from "react-select";
 
 import Quill from "quill";
 import RichTextEditor from "../../utils/RichTextEditor";
+import toast from "react-hot-toast";
 
 export default function Foods() {
   const dispatch = useDispatch();
   const foods = useSelector((store) => store.foods.foods);
+
   console.log(foods, "foods");
   const [editingFoods, setEditingFoods] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -36,8 +43,22 @@ export default function Foods() {
     foodIds: [],
     placeIds: [],
     cusinoIds: [],
+    hasFiles: true,
   });
   const editorRef = useRef();
+
+  useEffect(() => {
+    dispatch(fetchFoods());
+  }, []);
+
+  const getData = () => {
+    try {
+      dispatch(fetchFoods());
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to fetch data: " + error.message);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -47,22 +68,34 @@ export default function Foods() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault(z);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (editingFoods) {
-      dispatch(updateFood(formData));
+      const result = await dispatch(
+        updateFood({ id: editingFoods, data: formData })
+      );
+      console.log("result", result);
+      if (result?.payload?.success) {
+        toast.success("Food updated successfully!");
+        getData();
+        setShowForm(false);
+      } else {
+        toast.error("Failed to update food: " + result.error);
+      }
       setEditingFoods(null);
     } else {
-      dispatch(
-        addFood({
-          ...formData,
-          id: formData.id || Date.now().toString(),
-        })
-      );
+      const result = await dispatch(addFood(formData));
+      console.log("result", result);
+      if (result?.payload?.success) {
+        toast.success("Food added successfully!");
+        setShowForm(false);
+        getData();
+      } else {
+        toast.error("Failed to add food: " + result.error);
+      }
     }
     resetForm();
   };
-
   const resetForm = () => {
     setFormData({
       id: "",
@@ -75,6 +108,7 @@ export default function Foods() {
       foodIds: [],
       placeIds: [],
       cusinoIds: [],
+      hasFiles: true,
     });
     setShowForm(false);
     setEditingFoods(null);
@@ -82,13 +116,24 @@ export default function Foods() {
 
   const handleEdit = (state) => {
     setFormData(state);
-    setEditingFoods(state.id);
+    setEditingFoods(state._id);
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this state?")) {
-      dispatch(deleteFood(id));
+  const handleDelete = async (id) => {
+    try {
+      console.log("Deleting food with ID:", id);
+      const result = await dispatch(deleteFood(id));
+      console.log("Delete result:", result);
+      if (result?.payload?.success) {
+        toast.success("Food deleted successfully!");
+        getData();
+      } else {
+        toast.error("Failed to delete food: " + result.error);
+      }
+    } catch (error) {
+      console.error("Error deleting food:", error);
+      toast.error("Failed to delete food: " + error.message);
     }
   };
 
@@ -211,32 +256,51 @@ export default function Foods() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {foods.map((foods) => (
-          <Card key={foods.id}>
+        {foods.map((foodsData) => (
+          <Card key={foodsData._id}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>{foods.title}</span>
+                <div>
+                  <h3 className="text-lg font-semibold">{foodsData?.title}</h3>
+                  <p className="text-sm text-gray-600">{foodsData?.subtitle}</p>
+                </div>
                 <div className="flex space-x-2">
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleEdit(foods)}
+                    onClick={() => handleEdit(foodsData)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleDelete(foods.id)}
+                    onClick={() => handleDelete(foodsData._id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardTitle>
             </CardHeader>
+
             <CardContent>
-              <p className="text-sm text-gray-600 mb-2">{foods.subtitle}</p>
-              <div className="text-xs text-gray-500"></div>
+              {foodsData.coverImage?.url ? (
+                <img
+                  src={`${import.meta.env.VITE_BACKEND_URL}${
+                    foodsData.coverImage.url
+                  }`}
+                  alt={foodsData.title}
+                  className="w-full h-40 object-cover rounded-md mb-2"
+                />
+              ) : (
+                <div className="w-full h-40 bg-gray-200 flex items-center justify-center rounded-md mb-2">
+                  <span className="text-gray-500 text-sm">No Image</span>
+                </div>
+              )}
+              <div className="text-xs text-gray-500">
+                <p>ID: {foodsData._id}</p>
+                <p>Cities: {foodsData.cityIds?.length || 0}</p>
+              </div>
             </CardContent>
           </Card>
         ))}

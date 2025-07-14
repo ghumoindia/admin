@@ -14,6 +14,16 @@ const EndPoints = {
   fetchSingleCity: "/admin/v1/cities/getCityByID",
   updateCity: "/admin/v1/cities/updateCityById",
   deleteCity: "/admin/v1/cities/deleteCityById",
+  createPlace: "/admin/v1/places/createPlace",
+  fetchAllPlaces: "/admin/v1/places/allPlaces",
+  fetchSinglePlace: "/admin/v1/places/getPlaceByID",
+  updatePlace: "/admin/v1/places/updatePlaceById",
+  deletePlace: "/admin/v1/places/deletePlaceById",
+  fetchAllFoods: "/admin/v1/foods/allFoods",
+  createFood: "/admin/v1/foods/createFood",
+  fetchSingleFood: "/admin/v1/foods/getFoodByID",
+  updateFood: "/admin/v1/foods/updateFoodById",
+  deleteFood: "/admin/v1/foods/deleteFoodById",
 };
 
 export default EndPoints;
