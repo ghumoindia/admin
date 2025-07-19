@@ -32,6 +32,14 @@ const catchUnauthorized = async (error, retryFn, url, data, params) => {
   if (!tokenRefreshed && isUnauthorized) {
     return await handleUnauthorized(retryFn, url, data, params);
   }
+  console.error(
+    "API Error:",
+    error,
+    isUnauthorized,
+    message,
+    tokenRefreshed,
+    res
+  );
 
   throw error;
 };
@@ -56,6 +64,46 @@ const Api = {
       if (data.hasFiles) {
         payload = new FormData();
         for (const key in data) {
+          if (key === "hasFiles") continue;
+
+          const value = data[key];
+
+          if (Array.isArray(value)) {
+            value.forEach((item) => {
+              if (item instanceof File) {
+                payload.append(`${key}`, item);
+              } else {
+                payload.append(`${key}`, JSON.stringify(item));
+              }
+            });
+          } else if (value instanceof File) {
+            payload.append(key, value);
+          } else {
+            payload.append(key, value);
+          }
+        }
+      }
+      console.log("Payload for POST request:", payload);
+      const response = await instance.post(url, payload, {
+        params,
+        headers: {
+          ...buildHeaders(token),
+          ...(data.hasFiles && { "Content-Type": "multipart/form-data" }),
+        },
+      });
+      return response.data;
+    } catch (error) {
+      return await catchUnauthorized(error, Api.post, url, data, params);
+    }
+  },
+  put: async (url, data = {}, params = {}, token = null) => {
+    console.log(" data", data);
+    try {
+      let payload = data;
+
+      if (data.hasFiles) {
+        payload = new FormData();
+        for (const key in data) {
           if (key === "hasFiles") continue; // skip helper flag
 
           const value = data[key];
@@ -75,25 +123,13 @@ const Api = {
           }
         }
       }
-
-      const response = await instance.post(url, payload, {
+      console.log("payload", payload);
+      const response = await instance.put(url, payload, {
         params,
         headers: {
           ...buildHeaders(token),
           ...(data.hasFiles && { "Content-Type": "multipart/form-data" }),
         },
-      });
-      return response.data;
-    } catch (error) {
-      return await catchUnauthorized(error, Api.post, url, data, params);
-    }
-  },
-
-  put: async (url, data = {}, params = {}, token = null) => {
-    try {
-      const response = await instance.put(url, data, {
-        params,
-        headers: buildHeaders(token),
       });
       return response.data;
     } catch (error) {
@@ -115,6 +151,7 @@ const Api = {
 
   generateToken: async () => {
     const refreshTokenData = localStorage.getItem("refreshToken");
+
     try {
       const response = await instance.post(
         "/admin/v1/auth/refresh-token",
@@ -141,11 +178,18 @@ const Api = {
       }
       return { status: "authorized", token: accessToken };
     } catch (error) {
-      console.error("Error refreshing token:", error);
       if (error.response?.status === 403) {
-        ["accessToken", "refreshToken", "adminData"].forEach(
-          localStorage.removeItem
+        console.error(
+          "Error refreshing token=====>:",
+          error,
+          error.response?.status
         );
+        // ["accessToken", "refreshToken", "adminData"].forEach(
+        //   localStorage.removeItem
+        // );
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("adminData");
         window.location.reload();
         return { status: "unauthorized" };
       }

@@ -117,7 +117,7 @@ export default function States() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    console.log("Form submitted with data:", formData);
     const payload = {
       ...formData,
       cityIds: JSON.stringify(selectedCities.map((c) => c.value)),
@@ -226,6 +226,7 @@ export default function States() {
       cityIds,
       placeIds,
       foodIds,
+      hasFiles: true,
     };
 
     console.log("Editing state:", payload, state);
