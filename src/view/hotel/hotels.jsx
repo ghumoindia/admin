@@ -12,56 +12,44 @@ import {
 import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
-
-import {
-  addPlace,
-  deletePlace,
-  fetchPlaces,
-  updatePlace,
-} from "../../hooks/slice/placesSlice";
-
 import Select from "react-select";
-import Quill from "quill";
-import MyLexicalEditor from "../../utils/RichTextEditor";
 import RichTextEditor from "../../utils/RichTextEditor";
 import toast from "react-hot-toast";
-export default function Places() {
-  const dispatch = useDispatch();
-  const places = useSelector((places) => places.places.places || []);
+import {
+  addHotel,
+  deleteHotel,
+  fetchHotels,
+  updateHotel,
+} from "../../hooks/slice/hotelsSlice";
 
-  console.log(places, "places");
-  const [editingPlaces, setEditingPlaces] = useState(null);
+export default function Hotels() {
+  const dispatch = useDispatch();
+  const hotels = useSelector((store) => store.hotels.hotels);
+
+  console.log(hotels, "hotels");
+  const [editActivity, setEditActivity] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
-    title: "",
-    subtitle: "",
-    coverImage: null,
+    name: "",
+    coverImage: "",
     slideshowImages: [],
-    about: "",
-    stateIds: [],
-    foodIds: [],
-    placeIds: [],
-    cusinoIds: [],
+    description: "",
+    stateId: [],
     hasFiles: true,
   });
+  useEffect(() => {
+    dispatch(fetchHotels());
+  }, []);
 
-  const loading = useSelector((state) => state.places.loading);
-  const error = useSelector((state) => state.places.error);
   const getData = () => {
     try {
-      dispatch(fetchPlaces());
+      dispatch(fetchHotels());
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to fetch data: " + error.message);
     }
   };
-
-  useEffect(() => {
-    dispatch(fetchPlaces());
-  }, []);
-
-  const editorRef = useRef();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -70,22 +58,22 @@ export default function Places() {
       [name]: value,
     }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const formDataToSend = new FormData();
+    formDataToSend.append("name", formData.name);
+    formDataToSend.append("description", formData.description);
+    // formDataToSend.append(
+    //   "stateId",
+    //   JSON.stringify(formData?.stateId?.map((s) => s.value))
+    // );
 
-    formDataToSend.append("title", formData.title);
-    formDataToSend.append("subtitle", formData.subtitle);
-    formDataToSend.append("about", formData.about);
-
-    // Append new cover image if selected
     if (formData.coverImage instanceof File) {
       formDataToSend.append("coverImage", formData.coverImage);
     }
 
-    // Append only new slideshow images
+    // Add new slideshow images only
     formData.slideshowImages.forEach((img) => {
       if (img instanceof File) {
         formDataToSend.append("slideshowImages", img);
@@ -94,33 +82,26 @@ export default function Places() {
 
     let result;
 
-    if (editingPlaces) {
-      console.log("Editing Places:=>", editingPlaces, formData);
+    if (editActivity) {
       result = await dispatch(
-        updatePlace({ id: editingPlaces, data: formDataToSend })
+        updateHotel({ id: editActivity, data: formDataToSend })
       );
-      console.log("Update result:", result);
-
       if (result?.payload?.success) {
-        toast.success("Places updated successfully!");
+        toast.success("Hotels updated successfully!");
         getData();
-      } else {
-        toast.error("Failed to update Places: " + result.payload.error);
-        console.error("❌ Failed to update Places:", result.payload.error);
-      }
-
-      setEditingPlaces(null);
-    } else {
-      result = await dispatch(addPlace(formDataToSend));
-
-      if (result?.payload?.success) {
-        toast.success("Places created successfully!");
         setShowForm(false);
-        resetForm();
+      } else {
+        toast.error("Failed to update hotels: " + result?.payload?.error);
+      }
+      setEditActivity(null);
+    } else {
+      result = await dispatch(addHotel(formDataToSend));
+      if (result?.payload?.success) {
+        toast.success("Hotels added successfully!");
+        setShowForm(false);
         getData();
       } else {
-        toast.error("Failed to create Places: " + result?.error?.message);
-        console.error("❌ Failed to create Places:", result?.error?.message);
+        toast.error("Failed to add hotels: " + result?.payload?.error);
       }
     }
 
@@ -130,45 +111,38 @@ export default function Places() {
   const resetForm = () => {
     setFormData({
       id: "",
-      title: "",
-      subtitle: "",
-      coverImage: null,
+      name: "",
+      coverImage: "",
       slideshowImages: [],
-      about: "",
-      stateIds: [],
-      foodIds: [],
-      placeIds: [],
-      cusinoIds: [],
+      description: "",
+      stateId: [],
       hasFiles: true,
     });
     setShowForm(false);
-    setEditingPlaces(null);
+    setEditActivity(null);
   };
 
-  const handleEdit = (places) => {
-    console.log("Editing Places:", places);
-    setFormData(places);
-    setEditingPlaces(places._id);
+  const handleEdit = (state) => {
+    setFormData(state);
+    setEditActivity(state._id);
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     try {
-      dispatch(deletePlace({ id }))
-        .then((result) => {
-          if (result?.payload?.success) {
-            toast.success("Places deleted successfully!");
-            getData();
-          } else {
-            toast.error("Failed to delete Places: " + result.payload.error);
-            console.error("❌ Failed to delete Places:", result.payload.error);
-          }
-        })
-        .catch((error) => {
-          toast.error("Error deleting Places: " + error.message);
-          console.error("❌ Error deleting Places:", error);
-        });
-    } catch (error) {}
+      console.log("Deleting food with ID:", id);
+      const result = await dispatch(deleteHotel({ id }));
+      console.log("Delete result:", result);
+      if (result?.payload?.success) {
+        toast.success("Food deleted successfully!");
+        getData();
+      } else {
+        toast.error("Failed to delete food: " + result.error);
+      }
+    } catch (error) {
+      console.error("Error deleting food:", error);
+      toast.error("Failed to delete food: " + error.message);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -196,45 +170,33 @@ export default function Places() {
     reader.readAsDataURL(file);
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
   return (
     <div className="space-y-6">
       <div className="flex justify-end items-center">
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Places
+          Add Hotel
         </Button>
       </div>
+
       {showForm && (
         <Card>
           <CardHeader>
             <CardTitle>
-              {editingPlaces ? "Edit Places" : "Add New Places"}
+              {editActivity ? "Edit Hotel" : "Add New Hotel"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="title">Title</Label>
+                  <Label htmlFor="name">Name</Label>
                   <Input
-                    id="title"
-                    name="title"
-                    value={formData.title}
+                    id="name"
+                    name="name"
+                    value={formData.name}
                     onChange={handleInputChange}
                     placeholder="Rajasthan"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="subtitle">Subtitle</Label>
-                  <Input
-                    id="subtitle"
-                    name="subtitle"
-                    value={formData.subtitle}
-                    onChange={handleInputChange}
-                    placeholder="The Land of Kings"
                     required
                   />
                 </div>
@@ -265,11 +227,11 @@ export default function Places() {
               </div>
 
               <div>
-                <Label htmlFor="about">About</Label>
+                <Label htmlFor="description">description</Label>
                 <RichTextEditor
-                  value={formData.about}
+                  value={formData.description}
                   onChange={(content) =>
-                    setFormData((prev) => ({ ...prev, about: content }))
+                    setFormData((prev) => ({ ...prev, description: content }))
                   }
                   onImageUpload={handleImageUpload}
                   showPreview
@@ -280,7 +242,7 @@ export default function Places() {
               <div className="flex space-x-2">
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
-                  {editingPlaces ? "Update" : "Save"}
+                  {editActivity ? "Update" : "Save"}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
                   <X className="h-4 w-4 mr-2" />
@@ -293,26 +255,28 @@ export default function Places() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {places.map((placesData) => (
-          <Card key={placesData._id}>
+        {hotels.map((activities) => (
+          <Card key={activities._id}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-semibold">{placesData.title}</h3>
-                  <p className="text-sm text-gray-600">{placesData.subtitle}</p>
+                  <h3 className="text-lg font-semibold">{activities?.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {activities?.subtitle}
+                  </p>
                 </div>
                 <div className="flex space-x-2">
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleEdit(placesData)}
+                    onClick={() => handleEdit(activities)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleDelete(placesData._id)}
+                    onClick={() => handleDelete(activities._id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -321,12 +285,12 @@ export default function Places() {
             </CardHeader>
 
             <CardContent>
-              {placesData.coverImage?.url ? (
+              {activities.coverImage?.url ? (
                 <img
                   src={`${import.meta.env.VITE_BACKEND_URL}${
-                    placesData.coverImage.url
+                    activities.coverImage.url
                   }`}
-                  alt={placesData.title}
+                  alt={activities.name}
                   className="w-full h-40 object-cover rounded-md mb-2"
                 />
               ) : (
@@ -334,10 +298,10 @@ export default function Places() {
                   <span className="text-gray-500 text-sm">No Image</span>
                 </div>
               )}
-              <div className="text-xs text-gray-500">
-                <p>ID: {placesData._id}</p>
-                <p>Cities: {placesData.cityIds?.length || 0}</p>
-              </div>
+              {/* <div className="text-xs text-gray-500">
+                <p>ID: {activities._id}</p>
+                <p>Cities: {activities.cityIds?.length || 0}</p>
+              </div> */}
             </CardContent>
           </Card>
         ))}

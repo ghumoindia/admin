@@ -38,6 +38,10 @@ const getPageTitle = (pathname) => {
       return "Places Management";
     case "/foods":
       return "Foods Management";
+    case "/activity":
+      return "Activity Management";
+    case "/hotels":
+      return "Hotels Management";
     default:
       return "Tourist CMS";
   }
@@ -52,7 +56,7 @@ export default function Header() {
   const navigate = useNavigate();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const adminData = JSON.parse(adminDetails);
-  console.log(adminData, "adminData");
+
   const handleUnderConstruction = (feature) => {
     toast(`${feature} is under construction 🚧`);
   };

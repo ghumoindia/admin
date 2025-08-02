@@ -7,7 +7,7 @@ import EndPoints from "../../lib/endpoints";
 
 export const fetchPlaces = createAsyncThunk("places/fetchPlaces", async () => {
   const response = await Api.get(EndPoints.fetchAllPlaces);
-  console.log("Place added:=======>", response);
+
   return response.places; // Adjust based on your API response structure
 });
 

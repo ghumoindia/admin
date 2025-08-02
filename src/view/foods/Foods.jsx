@@ -67,14 +67,33 @@ export default function Foods() {
       [name]: value,
     }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const formDataToSend = new FormData();
+
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append("subtitle", formData.subtitle);
+    formDataToSend.append("about", formData.about);
+
+    if (formData.coverImage instanceof File) {
+      formDataToSend.append("coverImage", formData.coverImage);
+    }
+
+    formData.slideshowImages.forEach((img) => {
+      if (img instanceof File) {
+        formDataToSend.append("slideshowImages", img);
+      }
+    });
+
+    let result;
+
     if (editingFoods) {
-      const result = await dispatch(
-        updateFood({ id: editingFoods, data: formData })
+      result = await dispatch(
+        updateFood({ id: editingFoods, data: formDataToSend })
       );
       console.log("result", result);
+
       if (result?.payload?.success) {
         toast.success("Food updated successfully!");
         getData();
@@ -82,20 +101,24 @@ export default function Foods() {
       } else {
         toast.error("Failed to update food: " + result.error);
       }
+
       setEditingFoods(null);
     } else {
-      const result = await dispatch(addFood(formData));
+      result = await dispatch(addFood(formDataToSend));
       console.log("result", result);
+
       if (result?.payload?.success) {
         toast.success("Food added successfully!");
-        setShowForm(false);
         getData();
+        setShowForm(false);
       } else {
         toast.error("Failed to add food: " + result.error);
       }
     }
+
     resetForm();
   };
+
   const resetForm = () => {
     setFormData({
       id: "",

@@ -4,6 +4,8 @@ import {
   Building2,
   Camera,
   Utensils,
+  SquareActivity,
+  HotelIcon,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -35,6 +37,18 @@ export const NAV_ITEMS = [
     name: "Foods",
     href: "/foods",
     icon: Utensils,
+    roles: ["admin", "editor"],
+  },
+  {
+    name: "Activity",
+    href: "/activity",
+    icon: SquareActivity,
+    roles: ["admin", "editor"],
+  },
+  {
+    name: "Hotels",
+    href: "/hotels",
+    icon: HotelIcon,
     roles: ["admin", "editor"],
   },
 ];

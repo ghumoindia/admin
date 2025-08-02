@@ -64,47 +64,68 @@ export default function Cities() {
       [name]: value,
     }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
-      stateIds: JSON.stringify(selectedState.map((c) => c.value)),
-      placeIds: JSON.stringify(selectedPlaces.map((p) => p.value)),
-      foodIds: JSON.stringify(selectedFoods.map((f) => f.value)),
-    };
 
-    if (editingCities) {
-      const result = await dispatch(
-        updateCity({
-          id: editingCities, // Ensure editingState has an `id`
-          data: payload,
-        })
-      );
+    const formDataToSend = new FormData();
 
-      if (result?.payload?.success) {
-        toast.success("City updated successfully!");
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append("subtitle", formData.subtitle);
+    formDataToSend.append("about", formData.about);
 
-        getData();
-      } else {
-        toast.error("Failed to update City: " + result.payload.error);
-        console.error("❌ Failed to update City:", result.payload.error);
-      }
+    formDataToSend.append(
+      "stateIds",
+      JSON.stringify(selectedState.map((s) => s.value))
+    );
+    formDataToSend.append(
+      "placeIds",
+      JSON.stringify(selectedPlaces.map((p) => p.value))
+    );
+    formDataToSend.append(
+      "foodIds",
+      JSON.stringify(selectedFoods.map((f) => f.value))
+    );
 
-      setEditingCities(null);
-    } else {
-      const result = await dispatch(addCity(payload));
-      if (result?.payload?.success) {
-        toast.success("City created successfully!");
-        setShowForm(false);
-        resetForm();
-      } else {
-        toast.error("Failed to create City: " + result?.error?.message);
-        console.error("❌ Failed to create City:", result?.error?.message);
-      }
+    if (formData.coverImage instanceof File) {
+      formDataToSend.append("coverImage", formData.coverImage);
     }
 
-    resetForm();
+    formData.slideshowImages.forEach((img) => {
+      if (img instanceof File) {
+        formDataToSend.append("slideshowImages", img);
+      }
+    });
+
+    let result;
+    if (editingCities) {
+      result = await dispatch(
+        updateCity({
+          id: editingCities,
+          data: formDataToSend,
+        })
+      );
+    } else {
+      result = await dispatch(addCity(formDataToSend));
+    }
+
+    if (result?.payload?.success) {
+      toast.success(
+        `City ${editingCities ? "updated" : "created"} successfully!`
+      );
+      getData();
+      setShowForm(false);
+      resetForm();
+    } else {
+      toast.error(
+        `Failed to ${editingCities ? "update" : "create"} City: ${
+          result?.error?.message
+        }`
+      );
+      console.error(
+        `❌ Failed to ${editingCities ? "update" : "create"} City:`,
+        result?.error?.message
+      );
+    }
   };
 
   const resetForm = () => {

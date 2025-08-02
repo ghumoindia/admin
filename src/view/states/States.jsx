@@ -28,10 +28,13 @@ import toast from "react-hot-toast";
 import { fetchPlaces } from "../../hooks/slice/placesSlice";
 import { fetchCities } from "../../hooks/slice/citiesSlice";
 import { fetchFoods } from "../../hooks/slice/foodSlice";
+import { fetchActivities } from "../../hooks/slice/activitySlice";
+import { fetchHotels } from "../../hooks/slice/hotelsSlice";
 
 export default function States() {
   const dispatch = useDispatch();
   const states = useSelector((state) => state.states.states);
+  console.log(states, "states");
   const loading = useSelector((state) => state.states.loading);
   const error = useSelector((state) => state.states.error);
   const [editingState, setEditingState] = useState(null);
@@ -39,9 +42,13 @@ export default function States() {
   const [optionsCity, setOptionsCity] = useState([]);
   const [optionsPlace, setOptionsPlace] = useState([]);
   const [optionsFood, setOptionsFood] = useState([]);
+  const [optionsHotel, setOptionsHotel] = useState([]);
   const [selectedPlaces, setSelectedPlaces] = useState([]);
   const [selectedFoods, setSelectedFoods] = useState([]);
   const [selectedCities, setSelectedCities] = useState([]);
+  const [optionsActivities, setOptionsActivities] = useState([]);
+  const [selectedActivities, setSelectedActivities] = useState([]);
+  const [selectedHotels, setSelectedHotels] = useState([]);
   const [formData, setFormData] = useState({
     id: "",
     title: "",
@@ -53,6 +60,8 @@ export default function States() {
     foodIds: [],
     placeIds: [],
     cusinoIds: [],
+    hotelsIds: [],
+    activitiesIds: [],
     hasFiles: true,
   });
 
@@ -61,12 +70,9 @@ export default function States() {
       const optionsCityData = (await dispatch(fetchCities())) || [];
       const optionsPlaceData = (await dispatch(fetchPlaces())) || [];
       const optionsFoodData = (await dispatch(fetchFoods())) || [];
-      console.log(
-        "Fetched options:",
-        optionsCityData,
-        optionsPlaceData,
-        optionsFoodData
-      );
+      const optionsActivities = (await dispatch(fetchActivities())) || [];
+      const optionsHotelData = (await dispatch(fetchHotels())) || [];
+
       setOptionsCity(
         optionsCityData?.payload?.map((city) => ({
           value: city._id,
@@ -85,13 +91,32 @@ export default function States() {
           label: food.title,
         })) || []
       );
+      setOptionsActivities(
+        optionsActivities?.payload?.map((activities) => ({
+          value: activities._id,
+          label: activities.name,
+        })) || []
+      );
+      setOptionsHotel(
+        optionsHotelData?.payload?.map((hotel) => ({
+          value: hotel._id,
+          label: hotel.name,
+        })) || []
+      );
     } catch (error) {
       console.error("Error fetching options:", error);
       toast.error("Failed to fetch options: " + error.message);
     }
   };
 
-  console.log("Fetched options:", optionsCity, optionsPlace, optionsFood);
+  console.log(
+    "Fetched options:",
+    optionsCity,
+    optionsPlace,
+    optionsFood,
+    optionsActivities,
+    optionsHotel
+  );
   useEffect(() => {
     dispatch(fetchStates());
     getAllData();
@@ -117,49 +142,65 @@ export default function States() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted with data:", formData);
-    const payload = {
-      ...formData,
-      cityIds: JSON.stringify(selectedCities.map((c) => c.value)),
-      placeIds: JSON.stringify(selectedPlaces.map((p) => p.value)),
-      foodIds: JSON.stringify(selectedFoods.map((f) => f.value)),
-    };
-    console.log("Submitting form with payload:", payload);
+    const formDataToSend = new FormData();
 
-    if (editingState) {
-      // Update existing state via API
-      const result = await dispatch(
-        updateStateById({
-          id: editingState, // Ensure editingState has an `id`
-          data: payload,
-        })
-      );
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append("subtitle", formData.subtitle);
+    formDataToSend.append("about", formData.about);
 
-      if (result?.payload?.message) {
-        toast.success("State updated successfully!");
-        console.log("✅ State updated successfully");
-        getData();
-      } else {
-        toast.error("Failed to update state: " + result.payload.error);
-        console.error("❌ Failed to update state:", result.payload.error);
-      }
+    formDataToSend.append(
+      "cityIds",
+      JSON.stringify(selectedCities.map((c) => c.value))
+    );
+    formDataToSend.append(
+      "placeIds",
+      JSON.stringify(selectedPlaces.map((p) => p.value))
+    );
+    formDataToSend.append(
+      "foodIds",
+      JSON.stringify(selectedFoods.map((f) => f.value))
+    );
+    formDataToSend.append(
+      "activitiesIds",
+      JSON.stringify(selectedActivities.map((a) => a.value))
+    );
+    formDataToSend.append(
+      "hotelsIds",
+      JSON.stringify(selectedHotels.map((h) => h.value))
+    );
 
-      setEditingState(null);
-      setShowForm(false);
-    } else {
-      console.log("Creating new state with payload:", payload);
-      const result = await dispatch(createState(payload));
-      console.log("Create result:", result);
-      if (result?.payload?.success) {
-        toast.success("State created successfully!");
-        console.log("✅ State created successfully");
-      } else {
-        toast.error("Failed to create state: " + result?.error?.message);
-        console.error("❌ Failed to create state:", result?.error?.message);
-      }
+    if (formData.coverImage instanceof File) {
+      formDataToSend.append("coverImage", formData.coverImage);
     }
 
-    resetForm();
+    formData.slideshowImages.forEach((file) => {
+      if (file instanceof File) {
+        formDataToSend.append("slideshowImages", file);
+      }
+    });
+
+    console.log("edits data to send:", formDataToSend);
+    let result;
+    if (editingState) {
+      result = await dispatch(
+        updateStateById({
+          id: editingState,
+          data: formDataToSend,
+        })
+      );
+    } else {
+      result = await dispatch(createState(formDataToSend));
+    }
+
+    if (result?.payload?.success || result?.payload?.message) {
+      toast.success(
+        `State ${editingState ? "updated" : "created"} successfully!`
+      );
+      getData();
+      resetForm();
+    } else {
+      toast.error("Failed: " + result?.error?.message);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -198,11 +239,15 @@ export default function States() {
       foodIds: [],
       placeIds: [],
       cusinoIds: [],
+      activitiesIds: [],
+      hotelsIds: [],
       hasFiles: true,
     });
     setSelectedCities([]);
     setSelectedPlaces([]);
     setSelectedFoods([]);
+    setSelectedActivities([]);
+    setSelectedHotels([]);
     setShowForm(false);
     setEditingState(null);
   };
@@ -221,24 +266,35 @@ export default function States() {
       state.foodIds.some((idObj) => idObj._id === f.value)
     );
 
+    const activitiesIds = optionsActivities.filter((a) =>
+      state.activitiesIds.some((idObj) => idObj._id === a.value)
+    );
+
+    const hotelsIds = optionsHotel.filter((h) =>
+      state.hotelsIds.some((idObj) => idObj._id === h.value)
+    );
+
     const payload = {
       ...state,
       cityIds,
       placeIds,
       foodIds,
+      activitiesIds,
+      hotelsIds,
       hasFiles: true,
     };
 
-    console.log("Editing state:", payload, state);
+    console.log("Editing state:", payload, state, cityIds, activitiesIds);
 
     setFormData(payload);
     setEditingState(state._id);
     setShowForm(true);
 
-    // Reset selected states
     setSelectedCities(cityIds);
     setSelectedPlaces(placeIds);
     setSelectedFoods(foodIds);
+    setSelectedActivities(activitiesIds);
+    setSelectedHotels(hotelsIds);
   };
 
   const handleDelete = async (id) => {
@@ -384,6 +440,25 @@ export default function States() {
                     options={optionsFood}
                     value={selectedFoods}
                     onChange={(selected) => setSelectedFoods(selected)}
+                  />
+                </div>
+                <div>
+                  <Label>Activities</Label>
+                  <Select
+                    isMulti
+                    options={optionsActivities}
+                    value={selectedActivities}
+                    onChange={(selected) => setSelectedActivities(selected)}
+                  />
+                </div>
+
+                <div>
+                  <Label>Hotels</Label>
+                  <Select
+                    isMulti
+                    options={optionsHotel}
+                    value={selectedHotels}
+                    onChange={(selected) => setSelectedHotels(selected)}
                   />
                 </div>
               </div>

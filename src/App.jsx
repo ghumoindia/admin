@@ -10,6 +10,8 @@ import Cities from "./view/city/Cities";
 import Places from "./view/places/Places";
 import Foods from "./view/foods/Foods";
 import { Toaster } from "react-hot-toast";
+import Activity from "./view/activity/Activity";
+import Hotels from "./view/hotel/hotels";
 
 const App = () => {
   return (
@@ -32,6 +34,8 @@ const App = () => {
           <Route path="cities" element={<Cities />} />
           <Route path="places" element={<Places />} />
           <Route path="foods" element={<Foods />} />
+          <Route path="activity" element={<Activity />} />
+          <Route path="hotels" element={<Hotels />} />
         </Route>
       </Routes>
     </>
