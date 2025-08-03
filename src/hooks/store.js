@@ -6,7 +6,7 @@ import foodsReducer from "./slice/foodSlice";
 import authReducer from "./slice/authSlice";
 import activityReducer from "./slice/activitySlice";
 import HotelsReducer from "./slice/hotelsSlice";
-
+import DestinationReducer from "./slice/destinationSlice";
 export const store = configureStore({
   reducer: {
     states: statesReducer,
@@ -16,6 +16,7 @@ export const store = configureStore({
     auth: authReducer,
     activity: activityReducer,
     hotels: HotelsReducer,
+    destination: DestinationReducer,
   },
 });
 

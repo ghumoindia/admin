@@ -6,6 +6,8 @@ import {
   Utensils,
   SquareActivity,
   HotelIcon,
+  Building2Icon,
+  MapPlusIcon,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -49,6 +51,12 @@ export const NAV_ITEMS = [
     name: "Hotels",
     href: "/hotels",
     icon: HotelIcon,
+    roles: ["admin", "editor"],
+  },
+  {
+    name: "Destination",
+    href: "/destination",
+    icon: MapPlusIcon,
     roles: ["admin", "editor"],
   },
 ];

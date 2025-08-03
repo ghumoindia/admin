@@ -25,17 +25,26 @@ const EndPoints = {
   updateFood: "/admin/v1/foods/updateFoodById",
   deleteFood: "/admin/v1/foods/deleteFoodById",
 
+  //activity
   fetchAllActivities: "/admin/v1/activity/allActivities",
   createActivity: "/admin/v1/activity/createActivity",
   fetchSingleActivity: "/admin/v1/activity/getActivityByID",
   updateActivity: "/admin/v1/activity/updateActivityById",
   deleteActivity: "/admin/v1/activity/deleteActivityById",
 
+  //hotels
   fetchAllHotels: "/admin/v1/hotels/allHotels",
   createHotel: "/admin/v1/hotels/createHotel",
   fetchSingleHotel: "/admin/v1/hotels/getHotelByID",
   updateHotel: "/admin/v1/hotels/updateHotelById",
   deleteHotel: "/admin/v1/hotels/deleteHotelById",
+
+  //destination
+  fetchAllDestinations: "/admin/v1/destination/allDestinations",
+  createDestination: "/admin/v1/destination/createDestination",
+  fetchSingleDestination: " /admin/v1/destination/getDestinationByID",
+  updateDestination: "/admin/v1/destination/updateDestinationById",
+  deleteDestination: "/admin/v1/destination/deleteDestinationById",
 };
 
 export default EndPoints;
