@@ -45,6 +45,20 @@ const EndPoints = {
   fetchSingleDestination: " /admin/v1/destination/getDestinationByID",
   updateDestination: "/admin/v1/destination/updateDestinationById",
   deleteDestination: "/admin/v1/destination/deleteDestinationById",
+
+  //calender
+
+  // Replace your existing calendar endpoints with these:
+
+  fetchAllCalenders: "/admin/v1/calender",
+  createCalender: "/admin/v1/calender/month",
+  fetchSingleCalender: "/admin/v1/calender/month",
+  updateCalender: "/admin/v1/calender/month",
+  deleteCalender: "/admin/v1/calender/month",
+
+  // Additional endpoints for state operations (optional)
+  addStateToMonth: "/admin/v1/calender/month",
+  removeStateFromMonth: "/admin/v1/calender/month",
 };
 
 export default EndPoints;

@@ -13,6 +13,8 @@ import { Toaster } from "react-hot-toast";
 import Activity from "./view/activity/Activity";
 import Hotels from "./view/hotel/hotels";
 import Destination from "./view/destination/Destination";
+import { Calendar } from "lucide-react";
+import TravelCalendarAdmin from "./view/travelCalender/TravelCalender";
 
 const App = () => {
   return (
@@ -38,6 +40,7 @@ const App = () => {
           <Route path="activity" element={<Activity />} />
           <Route path="hotels" element={<Hotels />} />
           <Route path="destination" element={<Destination />} />
+          <Route path="/calender" element={<TravelCalendarAdmin />} />
         </Route>
       </Routes>
     </>

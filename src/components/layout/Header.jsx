@@ -42,6 +42,8 @@ const getPageTitle = (pathname) => {
       return "Activity Management";
     case "/hotels":
       return "Hotels Management";
+    case "/calender":
+      return "Travel Calendar Management";
     default:
       return "Tourist CMS";
   }

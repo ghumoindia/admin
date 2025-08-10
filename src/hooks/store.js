@@ -7,6 +7,8 @@ import authReducer from "./slice/authSlice";
 import activityReducer from "./slice/activitySlice";
 import HotelsReducer from "./slice/hotelsSlice";
 import DestinationReducer from "./slice/destinationSlice";
+import calenderReducer from "./slice/calenderSlice";
+
 export const store = configureStore({
   reducer: {
     states: statesReducer,
@@ -17,6 +19,7 @@ export const store = configureStore({
     activity: activityReducer,
     hotels: HotelsReducer,
     destination: DestinationReducer,
+    calender: calenderReducer,
   },
 });
 

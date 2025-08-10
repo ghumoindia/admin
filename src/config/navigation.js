@@ -8,6 +8,7 @@ import {
   HotelIcon,
   Building2Icon,
   MapPlusIcon,
+  Calendar,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -57,6 +58,12 @@ export const NAV_ITEMS = [
     name: "Destination",
     href: "/destination",
     icon: MapPlusIcon,
+    roles: ["admin", "editor"],
+  },
+  {
+    name: "Calender",
+    href: "/calender",
+    icon: Calendar,
     roles: ["admin", "editor"],
   },
 ];
