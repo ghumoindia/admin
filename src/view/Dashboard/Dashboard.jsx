@@ -1,19 +1,51 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
-import { MapPin, Building2, Camera, Utensils } from "lucide-react";
+import {
+  MapPin,
+  Building2,
+  Camera,
+  Utensils,
+  SquareActivity,
+  HotelIcon,
+  MapPlusIcon,
+} from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/components/ui/card";
+import { fetchStates } from "../../hooks/slice/statesSlice";
+import { fetchCities } from "../../hooks/slice/citiesSlice";
+import { fetchPlaces } from "../../hooks/slice/placesSlice";
+import { fetchFoods } from "../../hooks/slice/foodSlice";
+import { fetchActivities } from "../../hooks/slice/activitySlice";
+import { fetchHotels } from "../../hooks/slice/hotelsSlice";
+import { fetchDestinations } from "../../hooks/slice/destinationSlice";
+import { fetchExperiences } from "../../hooks/slice/experienceSlice";
 
 export default function Dashboard() {
   const states = useSelector((state) => state.states.states);
   const cities = useSelector((state) => state.cities.cities);
   const places = useSelector((state) => state.places.places);
   const foods = useSelector((state) => state.foods.foods);
+  const activities = useSelector((state) => state.activity.activities);
+  const hotels = useSelector((state) => state.hotels.hotels);
+  const destinations = useSelector((state) => state.destination.destinations);
+  const experiences = useSelector((state) => state.experience.experiences);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchStates());
+    dispatch(fetchCities());
+    dispatch(fetchPlaces());
+    dispatch(fetchFoods());
+    dispatch(fetchActivities());
+    dispatch(fetchHotels());
+    dispatch(fetchDestinations());
+    dispatch(fetchExperiences());
+  }, []);
 
   const stats = [
     {
@@ -40,16 +72,40 @@ export default function Dashboard() {
       icon: Utensils,
       color: "text-orange-600",
     },
+    {
+      name: "Total Activities",
+      value: activities?.length,
+      icon: SquareActivity,
+      color: "text-yellow-600",
+    },
+    {
+      name: "Total Hotels",
+      value: hotels?.length,
+      icon: HotelIcon,
+      color: "text-red-600",
+    },
+    {
+      name: "Total Destinations",
+      value: destinations?.length,
+      icon: MapPlusIcon,
+      color: "text-teal-600",
+    },
+    {
+      name: "Total Experiences",
+      value: experiences?.length,
+      icon: Camera,
+      color: "text-pink-600",
+    },
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">
-          Welcome to Tourist CMS
+          Welcome to Ghumo India
         </h2>
         <p className="mt-1 text-sm text-gray-600">
-          Manage your tourist information system efficiently
+          Manage your tourist information
         </p>
       </div>
 
@@ -101,10 +157,8 @@ export default function Dashboard() {
                     <Building2 className="h-4 w-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{city.name}</p>
-                    <p className="text-xs text-gray-500">
-                      State: {city.stateId}
-                    </p>
+                    <p className="text-sm font-medium">{city.title}</p>
+                    <p className="text-xs text-gray-500">{city.subtitle}</p>
                   </div>
                 </div>
               ))}

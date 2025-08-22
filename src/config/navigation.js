@@ -66,4 +66,10 @@ export const NAV_ITEMS = [
     icon: Calendar,
     roles: ["admin", "editor"],
   },
+  {
+    name: "Experience",
+    href: "/experience",
+    icon: Building2Icon,
+    roles: ["admin", "editor"],
+  },
 ];

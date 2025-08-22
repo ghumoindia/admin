@@ -43,7 +43,10 @@ export const updateDestination = createAsyncThunk(
 // Delete a destination
 export const deleteDestination = createAsyncThunk(
   "destinations/deleteDestination",
-  async ({ destinationId }) => {
+  async (destinationId) => {
+    if (!destinationId) {
+      throw new Error("Destination ID is required for deletion");
+    }
     try {
       const result = await Api.delete(
         `${EndPoints.deleteDestination}/${destinationId}`

@@ -59,6 +59,14 @@ const EndPoints = {
   // Additional endpoints for state operations (optional)
   addStateToMonth: "/admin/v1/calender/month",
   removeStateFromMonth: "/admin/v1/calender/month",
+
+  // Experience endpoints
+
+  fetchAllExperiences: "/admin/v1/experience/allExperiences",
+  createExperience: "/admin/v1/experience/createExperience",
+  fetchSingleExperience: "/admin/v1/experience/getExperienceByID",
+  updateExperience: "/admin/v1/experience/updateExperienceById",
+  deleteExperience: "/admin/v1/experience/deleteExperienceById",
 };
 
 export default EndPoints;

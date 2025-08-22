@@ -17,37 +17,35 @@ import Select from "react-select";
 import RichTextEditor from "../../utils/RichTextEditor";
 import toast from "react-hot-toast";
 import { fetchStates } from "../../hooks/slice/statesSlice";
-import {
-  addDestination,
-  deleteDestination,
-  fetchDestinations,
-  updateDestination,
-} from "../../hooks/slice/destinationSlice";
 
-export default function Destination() {
+import {
+  addExperience,
+  deleteExperience,
+  fetchExperiences,
+  updateExperience,
+} from "../../hooks/slice/experienceSlice";
+
+export default function Experiences() {
   const dispatch = useDispatch();
-  const destination = useSelector((store) => store.destination.destinations);
-  const loading = useSelector((state) => state?.destination?.loading);
-  const error = useSelector((state) => state?.destination?.error);
+  const destination = useSelector((store) => store?.experience?.experiences);
+  const loading = useSelector((state) => state?.experience?.loading);
+  const error = useSelector((state) => state?.experience?.error);
 
   console.log("destinationData", destination);
   const [optionsState, setOptionsState] = useState([]);
-  const [optionsPlace, setOptionsPlace] = useState([]);
   const [optionsCities, setOptionsCities] = useState([]);
-  const [selectedPlaces, setSelectedPlaces] = useState([]);
-  const [selectedFoods, setSelectedFoods] = useState([]);
+
   const [selectedState, setSelectedState] = useState([]);
   const [selectedCities, setSelectedCities] = useState([]);
-  const [editingCities, setEditingCities] = useState(null);
+  const [editingExperience, setEditingExperience] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
     title: "",
-    stateName: "",
     subtitle: "",
     coverImage: null,
     slideshowImages: [],
-    about: "",
+    description: "",
     stateIds: [],
     cityIds: [],
     cusinoIds: [],
@@ -55,13 +53,13 @@ export default function Destination() {
   });
 
   useEffect(() => {
-    dispatch(fetchDestinations());
+    dispatch(fetchExperiences());
     getAllData();
   }, []);
 
   const getData = () => {
     try {
-      dispatch(fetchDestinations());
+      dispatch(fetchExperiences());
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to fetch data: " + error.message);
@@ -82,8 +80,7 @@ export default function Destination() {
 
     formDataToSend.append("title", formData.title);
     formDataToSend.append("subtitle", formData.subtitle);
-    formDataToSend.append("about", formData.about);
-    formDataToSend.append("stateName", formData.stateName);
+    formDataToSend.append("description", formData.description);
 
     formDataToSend.append(
       "stateIds",
@@ -105,32 +102,32 @@ export default function Destination() {
     });
 
     let result;
-    if (editingCities) {
+    if (editingExperience) {
       result = await dispatch(
-        updateDestination({
-          id: editingCities,
+        updateExperience({
+          id: editingExperience,
           data: formDataToSend,
         })
       );
     } else {
-      result = await dispatch(addDestination(formDataToSend));
+      result = await dispatch(addExperience(formDataToSend));
     }
 
     if (result?.payload?.success) {
       toast.success(
-        `City ${editingCities ? "updated" : "created"} successfully!`
+        `Experiences ${editingExperience ? "updated" : "created"} successfully!`
       );
       getData();
       setShowForm(false);
       resetForm();
     } else {
       toast.error(
-        `Failed to ${editingCities ? "update" : "create"} City: ${
+        `Failed to ${editingExperience ? "update" : "create"} Experiences: ${
           result?.error?.message
         }`
       );
       console.error(
-        `❌ Failed to ${editingCities ? "update" : "create"} City:`,
+        `❌ Failed to ${editingExperience ? "update" : "create"} Experiences:`,
         result?.error?.message
       );
     }
@@ -143,7 +140,7 @@ export default function Destination() {
       subtitle: "",
       coverImage: null,
       slideshowImages: [],
-      about: "",
+      description: "",
       stateName: "",
       stateIds: [],
       cityIds: [],
@@ -154,7 +151,7 @@ export default function Destination() {
     setSelectedState([]);
     setSelectedCities([]);
     setShowForm(false);
-    setEditingCities(null);
+    setEditingExperience(null);
   };
 
   const getAllData = async () => {
@@ -211,7 +208,7 @@ export default function Destination() {
     );
 
     setFormData(payload);
-    setEditingCities(destination._id);
+    setEditingExperience(destination._id);
     setShowForm(true);
 
     // Reset selected states
@@ -222,18 +219,21 @@ export default function Destination() {
   const handleDelete = async (id) => {
     console.log("Deleting destination with ID:", id);
     try {
-      const result = await dispatch(deleteDestination(id));
+      const result = await dispatch(deleteExperience(id));
 
       if (result?.payload?.success) {
-        toast.success("City delete  successfully");
+        toast.success("Experiences delete  successfully");
         getData();
       } else {
-        toast.error("Failed to delete City: " + result?.error?.message);
-        console.error("❌ Failed to delete City:", result?.error?.message);
+        toast.error("Failed to delete Experiences: " + result?.error?.message);
+        console.error(
+          "❌ Failed to delete Experiences:",
+          result?.error?.message
+        );
       }
     } catch (error) {
-      toast.error("Error deleting City: " + error.message);
-      console.error("❌ Error deleting City:");
+      toast.error("Error deleting Experiences: " + error.message);
+      console.error("❌ Error deleting Experiences:");
     }
   };
 
@@ -278,7 +278,7 @@ export default function Destination() {
       <div className="flex justify-end items-center">
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Destination
+          Add Experiences
         </Button>
       </div>
 
@@ -286,7 +286,7 @@ export default function Destination() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {editingCities ? "Edit Destination" : "Add New Destination"}
+              {editingExperience ? "Edit Experiences" : "Add New Experiences"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -312,17 +312,6 @@ export default function Destination() {
                     value={formData.subtitle}
                     onChange={handleInputChange}
                     placeholder="The Land of Kings"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="subtitle">State Name</Label>
-                  <Input
-                    id="stateName "
-                    name="stateName"
-                    value={formData.stateName}
-                    onChange={handleInputChange}
-                    placeholder="enter state name.."
                     required
                   />
                 </div>
@@ -353,12 +342,12 @@ export default function Destination() {
               </div>
 
               <div>
-                <Label htmlFor="about">About</Label>
+                <Label htmlFor="description">About</Label>
 
                 <RichTextEditor
-                  value={formData.about}
+                  value={formData.description}
                   onChange={(content) =>
-                    setFormData((prev) => ({ ...prev, about: content }))
+                    setFormData((prev) => ({ ...prev, description: content }))
                   }
                   onImageUpload={handleImageUpload}
                   showPreview
@@ -390,7 +379,7 @@ export default function Destination() {
               <div className="flex space-x-2">
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
-                  {editingCities ? "Update" : "Save"}
+                  {editingExperience ? "Update" : "Save"}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
                   <X className="h-4 w-4 mr-2" />

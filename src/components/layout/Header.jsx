@@ -44,8 +44,10 @@ const getPageTitle = (pathname) => {
       return "Hotels Management";
     case "/calender":
       return "Travel Calendar Management";
+    case "/experience":
+      return "Experience Management";
     default:
-      return "Tourist CMS";
+      return "Ghumo India Admin Panel";
   }
 };
 

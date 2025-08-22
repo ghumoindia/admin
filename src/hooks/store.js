@@ -8,6 +8,7 @@ import activityReducer from "./slice/activitySlice";
 import HotelsReducer from "./slice/hotelsSlice";
 import DestinationReducer from "./slice/destinationSlice";
 import calenderReducer from "./slice/calenderSlice";
+import Experiences from "./slice/experienceSlice";
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     hotels: HotelsReducer,
     destination: DestinationReducer,
     calender: calenderReducer,
+    experience: Experiences,
   },
 });
 

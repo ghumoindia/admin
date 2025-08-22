@@ -11,7 +11,7 @@ const Sidebar = () => {
   return (
     <div className="flex h-full w-64 flex-col bg-gray-900">
       <div className="flex items-center justify-center px-4 py-4">
-        <h1 className="text-xl font-bold text-white">Tourist CMS</h1>
+        <h1 className="text-xl font-bold text-white">Ghumo India</h1>
       </div>
       <nav className="flex-1 space-y-1 px-2 py-4">
         {NAV_ITEMS.filter((item) => item.roles.includes(userRole)).map(
