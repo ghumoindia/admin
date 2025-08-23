@@ -10,6 +10,7 @@ const getToken = () => localStorage.getItem("accessToken");
 
 const buildHeaders = (token) => ({
   Authorization: `Bearer ${token || getToken()}`,
+  credentials: true,
 });
 
 const handleUnauthorized = async (retryFn, url, data, params) => {
