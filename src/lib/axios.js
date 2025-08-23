@@ -2,6 +2,7 @@ import axios from "axios";
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
+  withCredentials: true,
 });
 
 let tokenRefreshed = false;
@@ -10,7 +11,6 @@ const getToken = () => localStorage.getItem("accessToken");
 
 const buildHeaders = (token) => ({
   Authorization: `Bearer ${token || getToken()}`,
-  credentials: true,
 });
 
 const handleUnauthorized = async (retryFn, url, data, params) => {
