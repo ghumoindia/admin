@@ -9,6 +9,8 @@ import HotelsReducer from "./slice/hotelsSlice";
 import DestinationReducer from "./slice/destinationSlice";
 import calenderReducer from "./slice/calenderSlice";
 import Experiences from "./slice/experienceSlice";
+import videoReducer from "./slice/videoSlice";
+import wondersReducer from "./slice/wondersSlice";
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +24,8 @@ export const store = configureStore({
     destination: DestinationReducer,
     calender: calenderReducer,
     experience: Experiences,
+    video: videoReducer,
+    wonders: wondersReducer,
   },
 });
 

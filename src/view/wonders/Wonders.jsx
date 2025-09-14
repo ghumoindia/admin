@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/components/ui/button";
 import {
@@ -11,33 +12,23 @@ import {
 import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/components/ui/input";
 import { Textarea } from "@/components/components/ui/textarea";
-import { fetchCities } from "../../hooks/slice/citiesSlice";
-
 import Select from "react-select";
 import RichTextEditor from "../../utils/RichTextEditor";
 import toast from "react-hot-toast";
-import { fetchStates } from "../../hooks/slice/statesSlice";
 
 import {
-  addExperience,
-  deleteExperience,
-  fetchExperiences,
-  updateExperience,
-} from "../../hooks/slice/experienceSlice";
+  createWonders,
+  deleteWonders,
+  fetchWonders,
+  updateWonders,
+} from "../../hooks/slice/wondersSlice";
 
-export default function Experiences() {
+export default function Wonders() {
   const dispatch = useDispatch();
-  const experiences = useSelector((store) => store?.experience?.experiences);
-  const loading = useSelector((state) => state?.experience?.loading);
-  const error = useSelector((state) => state?.experience?.error);
+  const wonders = useSelector((store) => store.wonders.wonders);
 
-  console.log("experiences--------->", experiences);
-  const [optionsState, setOptionsState] = useState([]);
-  const [optionsCities, setOptionsCities] = useState([]);
-
-  const [selectedState, setSelectedState] = useState([]);
-  const [selectedCities, setSelectedCities] = useState([]);
-  const [editingExperience, setEditingExperience] = useState(null);
+  console.log(wonders, "wonders");
+  const [editActivity, setEditActivity] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -45,21 +36,16 @@ export default function Experiences() {
     subtitle: "",
     coverImage: null,
     slideshowImages: [],
-    description: "",
-    stateIds: [],
-    cityIds: [],
-    cusinoIds: [],
+    about: "",
     hasFiles: true,
   });
-
   useEffect(() => {
-    dispatch(fetchExperiences());
-    getAllData();
+    dispatch(fetchWonders());
   }, []);
 
   const getData = () => {
     try {
-      dispatch(fetchExperiences());
+      dispatch(fetchWonders());
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to fetch data: " + error.message);
@@ -77,60 +63,48 @@ export default function Experiences() {
     e.preventDefault();
 
     const formDataToSend = new FormData();
-
     formDataToSend.append("title", formData.title);
     formDataToSend.append("subtitle", formData.subtitle);
-    formDataToSend.append("description", formData.description);
+    formDataToSend.append("about", formData.about);
 
-    formDataToSend.append(
-      "stateIds",
-      JSON.stringify(selectedState.map((s) => s.value))
-    );
-    formDataToSend.append(
-      "cityIds",
-      JSON.stringify(selectedCities.map((c) => c.value))
-    );
-
+    // Append new cover image if selected
     if (formData.coverImage instanceof File) {
       formDataToSend.append("coverImage", formData.coverImage);
     }
 
+    // Append only new slideshow images
     formData.slideshowImages.forEach((img) => {
       if (img instanceof File) {
         formDataToSend.append("slideshowImages", img);
       }
     });
-
     let result;
-    if (editingExperience) {
+
+    if (editActivity) {
       result = await dispatch(
-        updateExperience({
-          id: editingExperience,
-          data: formDataToSend,
-        })
+        updateWonders({ id: editActivity, data: formDataToSend })
       );
+      if (result?.payload?.success) {
+        toast.success("Hotels updated successfully!");
+        getData();
+        setShowForm(false);
+      } else {
+        toast.error("Failed to update wonders: " + result?.payload?.error);
+      }
+      setEditActivity(null);
     } else {
-      result = await dispatch(addExperience(formDataToSend));
+      console.log("formdata", formDataToSend);
+      result = await dispatch(createWonders(formDataToSend));
+      if (result?.payload?.success) {
+        toast.success("Hotels added successfully!");
+        setShowForm(false);
+        getData();
+      } else {
+        toast.error("Failed to add wonders: " + result?.payload?.error);
+      }
     }
 
-    if (result?.payload?.success) {
-      toast.success(
-        `Experiences ${editingExperience ? "updated" : "created"} successfully!`
-      );
-      getData();
-      setShowForm(false);
-      resetForm();
-    } else {
-      toast.error(
-        `Failed to ${editingExperience ? "update" : "create"} Experiences: ${
-          result?.error?.message
-        }`
-      );
-      console.error(
-        `❌ Failed to ${editingExperience ? "update" : "create"} Experiences:`,
-        result?.error?.message
-      );
-    }
+    resetForm();
   };
 
   const resetForm = () => {
@@ -140,100 +114,34 @@ export default function Experiences() {
       subtitle: "",
       coverImage: null,
       slideshowImages: [],
-      description: "",
-      stateName: "",
-      stateIds: [],
-      cityIds: [],
-      cusinoIds: [],
+      about: "",
+
       hasFiles: true,
     });
-
-    setSelectedState([]);
-    setSelectedCities([]);
     setShowForm(false);
-    setEditingExperience(null);
+    setEditActivity(null);
   };
 
-  const getAllData = async () => {
-    try {
-      const optionsStateData = (await dispatch(fetchStates())) || [];
-      const optionsCities = (await dispatch(fetchCities())) || [];
-
-      setOptionsState(
-        optionsStateData?.payload?.states?.map((state) => ({
-          value: state._id,
-          label: state.title,
-        })) || []
-      );
-      setOptionsCities(
-        optionsCities?.payload?.map((experiences) => ({
-          value: experiences._id,
-          label: experiences.title,
-        })) || []
-      );
-    } catch (error) {
-      console.error("Error fetching options:", error);
-      toast.error("Failed to fetch options: " + error.message);
-    }
-  };
-
-  const handleEdit = (experiences) => {
-    console.log(
-      "Editing experiences:====>",
-      experiences,
-      optionsState,
-      optionsCities
-    );
-
-    const stateIds = optionsState?.filter((s) =>
-      experiences?.stateIds?.some((idObj) => idObj._id === s.value)
-    );
-
-    const cityIds = optionsCities?.filter((c) =>
-      experiences?.cityIds?.some((idObj) => idObj._id === c.value)
-    );
-
-    const payload = {
-      ...experiences,
-      stateIds,
-      cityIds,
-    };
-
-    console.log(
-      "Editing experiences:",
-      payload,
-      experiences,
-      stateIds,
-      cityIds
-    );
-
-    setFormData(payload);
-    setEditingExperience(experiences._id);
+  const handleEdit = (state) => {
+    setFormData(state);
+    setEditActivity(state._id);
     setShowForm(true);
-
-    // Reset selected states
-    setSelectedState(stateIds);
-    setSelectedCities(cityIds);
   };
 
   const handleDelete = async (id) => {
-    console.log("Deleting experiences with ID:", id);
     try {
-      const result = await dispatch(deleteExperience(id));
-
+      console.log("Deleting food with ID:", id);
+      const result = await dispatch(deleteWonders({ id }));
+      console.log("Delete result:", result);
       if (result?.payload?.success) {
-        toast.success("Experiences delete  successfully");
+        toast.success("Food deleted successfully!");
         getData();
       } else {
-        toast.error("Failed to delete Experiences: " + result?.error?.message);
-        console.error(
-          "❌ Failed to delete Experiences:",
-          result?.error?.message
-        );
+        toast.error("Failed to delete food: " + result.error);
       }
     } catch (error) {
-      toast.error("Error deleting Experiences: " + error.message);
-      console.error("❌ Error deleting Experiences:");
+      console.error("Error deleting food:", error);
+      toast.error("Failed to delete food: " + error.message);
     }
   };
 
@@ -253,32 +161,21 @@ export default function Experiences() {
     }));
   };
 
-  const handleSelectChange = (selectedOptions, name) => {
-    const values = selectedOptions.map((option) => option.value);
-    setFormData((prev) => ({
-      ...prev,
-      [name]: selectedOptions,
-    }));
-  };
-
   const handleImageUpload = (file, callback) => {
     // Simulate image upload
     const reader = new FileReader();
     reader.onload = (e) => {
       callback(e.target.result);
     };
-    reader;
+    reader.readAsDataURL(file);
   };
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-end items-center">
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Experiences
+          Add Wonders
         </Button>
       </div>
 
@@ -286,7 +183,7 @@ export default function Experiences() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {editingExperience ? "Edit Experiences" : "Add New Experiences"}
+              {editActivity ? "Edit wonders" : "Add New wonders"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -303,8 +200,7 @@ export default function Experiences() {
                     required
                   />
                 </div>
-
-                <div>
+                {/* <div>
                   <Label htmlFor="subtitle">Subtitle</Label>
                   <Input
                     id="subtitle"
@@ -314,7 +210,7 @@ export default function Experiences() {
                     placeholder="The Land of Kings"
                     required
                   />
-                </div>
+                </div> */}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -342,12 +238,11 @@ export default function Experiences() {
               </div>
 
               <div>
-                <Label htmlFor="description">About</Label>
-
+                <Label htmlFor="about">About</Label>
                 <RichTextEditor
-                  value={formData.description}
+                  value={formData.about}
                   onChange={(content) =>
-                    setFormData((prev) => ({ ...prev, description: content }))
+                    setFormData((prev) => ({ ...prev, about: content }))
                   }
                   onImageUpload={handleImageUpload}
                   showPreview
@@ -355,31 +250,10 @@ export default function Experiences() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label>State</Label>
-                  <Select
-                    isMulti
-                    options={optionsState}
-                    value={selectedState}
-                    onChange={(selected) => setSelectedState(selected)}
-                  />
-                </div>
-                <div>
-                  <Label>City</Label>
-                  <Select
-                    isMulti
-                    options={optionsCities}
-                    value={selectedCities}
-                    onChange={(selected) => setSelectedCities(selected)}
-                  />
-                </div>
-              </div>
-
               <div className="flex space-x-2">
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
-                  {editingExperience ? "Update" : "Save"}
+                  {editActivity ? "Update" : "Save"}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
                   <X className="h-4 w-4 mr-2" />
@@ -392,28 +266,28 @@ export default function Experiences() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {experiences.map((experiences) => (
-          <Card key={experiences._id}>
+        {wonders.map((activities) => (
+          <Card key={activities._id}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-semibold">{experiences.title}</h3>
+                  <h3 className="text-lg font-semibold">{activities?.title}</h3>
                   <p className="text-sm text-gray-600">
-                    {experiences.stateName}
+                    {activities?.subtitle}
                   </p>
                 </div>
                 <div className="flex space-x-2">
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleEdit(experiences)}
+                    onClick={() => handleEdit(activities)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleDelete(experiences._id)}
+                    onClick={() => handleDelete(activities._id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -422,12 +296,12 @@ export default function Experiences() {
             </CardHeader>
 
             <CardContent>
-              {experiences.coverImage?.url ? (
+              {activities.coverImage?.url ? (
                 <img
                   src={`${import.meta.env.VITE_BACKEND_URL}${
-                    experiences.coverImage.url
+                    activities.coverImage.url
                   }`}
-                  alt={experiences.title}
+                  alt={activities.name}
                   className="w-full h-40 object-cover rounded-md mb-2"
                 />
               ) : (
@@ -436,8 +310,8 @@ export default function Experiences() {
                 </div>
               )}
               {/* <div className="text-xs text-gray-500">
-                <p>ID: {experiences._id}</p>
-                <p>Citis: {experiences.cityIds?.length || 0}</p>
+                <p>ID: {activities._id}</p>
+                <p>Cities: {activities.cityIds?.length || 0}</p>
               </div> */}
             </CardContent>
           </Card>

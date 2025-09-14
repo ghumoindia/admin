@@ -67,6 +67,19 @@ const EndPoints = {
   fetchSingleExperience: "/admin/v1/experience/getExperienceByID",
   updateExperience: "/admin/v1/experience/updateExperienceById",
   deleteExperience: "/admin/v1/experience/deleteExperienceById",
+
+  //video
+  getHeroVideo: "/admin/v1/video/getVideo",
+  uploadHeroVideo: "/admin/v1/video/uploadVideo",
+  deleteHeroVideo: "/admin/v1/video/deleteVideoById",
+
+  //wonders
+
+  createWonders: "/admin/v1/wonders/createWonder",
+  updateWonders: "/admin/v1/wonders/updateWonder",
+  deleteWonders: "/admin/v1/wonders/deleteWonder",
+  getAllWonders: "/admin/v1/wonders/allWonders",
+  getWondersById: "/admin/v1/wonders/getWondersByID",
 };
 
 export default EndPoints;

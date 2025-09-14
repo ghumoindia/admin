@@ -9,6 +9,8 @@ import {
   Building2Icon,
   MapPlusIcon,
   Calendar,
+  VideoIcon,
+  Cone,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -70,6 +72,18 @@ export const NAV_ITEMS = [
     name: "Experience",
     href: "/experience",
     icon: Building2Icon,
+    roles: ["admin", "editor"],
+  },
+  {
+    name: "Video",
+    href: "/video",
+    icon: VideoIcon,
+    roles: ["admin", "editor"],
+  },
+  {
+    name: "Wonders",
+    href: "/wonders",
+    icon: Cone,
     roles: ["admin", "editor"],
   },
 ];

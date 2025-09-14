@@ -16,6 +16,8 @@ import Destination from "./view/destination/Destination";
 import { Calendar } from "lucide-react";
 import TravelCalendarAdmin from "./view/travelCalender/TravelCalender";
 import Experiences from "./view/experience/Experience";
+import HeroVideo from "./view/video/HeroVideo";
+import Wonders from "./view/wonders/Wonders";
 
 const App = () => {
   return (
@@ -42,7 +44,9 @@ const App = () => {
           <Route path="hotels" element={<Hotels />} />
           <Route path="destination" element={<Destination />} />
           <Route path="/calender" element={<TravelCalendarAdmin />} />
-          <Route path="/experience" element={<Experiences />} />
+          <Route path="experience" element={<Experiences />} />
+          <Route path="video" element={<HeroVideo />} />
+          <Route path="wonders" element={<Wonders />} />
         </Route>
       </Routes>
     </>
